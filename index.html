@@ -161,6 +161,7 @@
             border-radius: 0 0 20px 20px;
             padding: 60px 40px 40px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         .status-title {
@@ -283,6 +284,8 @@
             border-radius: 8px;
             padding: 16px;
             margin-top: 20px;
+            max-height: 70vh;
+            overflow-y: auto;
         }
 
         .pix-qr {
@@ -620,7 +623,7 @@
             try {
                 const settings = {
                     initialization: {
-                        amount: 1000, // R$ 10,00
+                        amount: 10, // R$ 10,00 (valor correto)
                         payer: {
                             firstName: "",
                             lastName: "",
@@ -634,12 +637,9 @@
                             },
                         },
                         paymentMethods: {
-                            ticket: "all",
-                            bankTransfer: "all",
                             creditCard: "all",
-                            prepaidCard: "all",
-                            debitCard: "all",
-                            mercadoPago: "all",
+                            bankTransfer: "all",
+                            maxInstallments: 1 // Apenas 1x para R$ 10
                         },
                     },
                     callbacks: {
@@ -658,7 +658,8 @@
                                 const paymentData = {
                                     ...formData,
                                     uid: userUID,
-                                    description: 'Teste de Prosperidade'
+                                    description: 'Teste de Prosperidade',
+                                    transaction_amount: 10 // Garantir R$ 10,00
                                 };
 
                                 // Enviar para backend
@@ -757,12 +758,13 @@
 
                 const simpleSettings = {
                     initialization: {
-                        amount: 1000,
+                        amount: 10, // R$ 10,00 correto
                     },
                     customization: {
                         paymentMethods: {
                             creditCard: "all",
-                            bankTransfer: "all"
+                            bankTransfer: "all",
+                            maxInstallments: 1
                         },
                     },
                     callbacks: {
@@ -778,7 +780,8 @@
                                 const paymentData = {
                                     ...formData,
                                     uid: userUID,
-                                    description: 'Teste de Prosperidade'
+                                    description: 'Teste de Prosperidade',
+                                    transaction_amount: 10 // Garantir R$ 10,00
                                 };
 
                                 fetch(`${BACKEND_URL}/api/process_payment`, {
