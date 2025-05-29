@@ -635,13 +635,9 @@
                         },
                         paymentMethods: {
                             creditCard: "all",
-                            debitCard: "off",
                             ticket: "off",
                             bankTransfer: "all", // Pix
-                            atm: "off",
-                            onboarding_credits: "off",
-                            wallet_purchase: "off",
-                            maxInstallments: 1
+                            atm: "off"
                         },
                     },
                     callbacks: {
@@ -710,6 +706,16 @@
                             console.error('❌ Erro Payment Brick:', error);
                             console.log('🔍 Detalhes do erro:', JSON.stringify(error, null, 2));
                             
+                            // Limpar brick antes de tentar recriar
+                            if (window.paymentBrickController) {
+                                try {
+                                    window.paymentBrickController.unmount();
+                                } catch (e) {
+                                    console.log('Brick já estava desmontado');
+                                }
+                                window.paymentBrickController = null;
+                            }
+                            
                             // Tentar recriar o brick com configuração mais simples
                             setTimeout(() => {
                                 console.log('🔄 Tentando recriar Payment Brick...');
@@ -747,12 +753,6 @@
                 const simpleSettings = {
                     initialization: {
                         amount: 1000,
-                    },
-                    customization: {
-                        paymentMethods: {
-                            creditCard: "all",
-                            bankTransfer: "all"
-                        },
                     },
                     callbacks: {
                         onReady: () => {
