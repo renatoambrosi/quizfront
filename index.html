@@ -634,10 +634,12 @@
                             },
                         },
                         paymentMethods: {
+                            ticket: "all",
+                            bankTransfer: "all",
                             creditCard: "all",
-                            ticket: "off",
-                            bankTransfer: "all", // Pix
-                            atm: "off"
+                            prepaidCard: "all",
+                            debitCard: "all",
+                            mercadoPago: "all",
                         },
                     },
                     callbacks: {
@@ -746,13 +748,22 @@
                 document.getElementById('paymentBrick_container').innerHTML = `
                     <div class="loading-state">
                         <div class="spinner"></div>
-                        <p>Recarregando sistema de pagamento...</p>
+                        <p>Carregando sistema básico de pagamento...</p>
                     </div>
                 `;
+
+                // Aguardar um pouco antes de tentar recriar
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 const simpleSettings = {
                     initialization: {
                         amount: 1000,
+                    },
+                    customization: {
+                        paymentMethods: {
+                            creditCard: "all",
+                            bankTransfer: "all"
+                        },
                     },
                     callbacks: {
                         onReady: () => {
