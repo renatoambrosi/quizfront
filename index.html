@@ -3,970 +3,412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - Teste de Prosperidade</title>
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <title>Telas de Status de Pagamento</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            min-height: 100vh;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+            padding: 40px 20px;
+        }
+        
+        /* Navegação entre telas */
+        .navigation {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+        
+        .nav-button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .nav-button:hover {
+            background: #555;
+        }
+        
+        .nav-button.active {
+            background: #2196F3;
+        }
+        
+        /* Container das telas */
+        .screens-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .screen {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        /* Headers com cores diferentes */
+        .header {
+            padding: 28px 20px;
+            text-align: center;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
-        .checkout-container {
-            max-width: 500px;
-            width: 100%;
+        
+        .header-success {
+            background-color: #4CAF50;
+        }
+        
+        .header-error {
+            background-color: #f44336;
+        }
+        
+        .header-processing {
+            background-color: #2196F3;
+        }
+        
+        .header-warning {
+            background-color: #ff9800;
+        }
+        
+        /* Container do ícone */
+        .icon-container {
+            width: 80px;
+            height: 80px;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .checkout-header {
-            padding: 24px 32px 20px;
-            background: white;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .checkout-header h2 {
-            font-size: 20px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        .amount-display {
-            font-size: 24px;
-            font-weight: 600;
-            color: #00a650;
-            margin-bottom: 12px;
-        }
-
-        .completion-message {
-            font-size: 14px;
-            color: #666;
-            background: #f8f9fa;
-            padding: 12px 16px;
-            border-radius: 6px;
-            border: 1px solid #e9ecef;
-            text-align: center;
-            margin-top: 8px;
-        }
-
-        .completion-message .icon {
-            margin-right: 6px;
-        }
-
-        .payment-container {
-            padding: 0;
-            background: white;
-        }
-
-        #paymentBrick_container {
-            min-height: 400px;
-        }
-
-        .loading-state {
-            padding: 60px 32px;
-            text-align: center;
-            color: #666;
-        }
-
-        .spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #009ee3;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            position: relative;
         }
-
+        
+        /* Ícones SVG */
+        .icon-container svg {
+            width: 36px;
+            height: 36px;
+            stroke-width: 2.5;
+            fill: none;
+            display: block;
+        }
+        
+        /* Cores dos ícones */
+        .success-icon { stroke: #4CAF50; }
+        .error-icon { stroke: #f44336; }
+        .processing-icon { stroke: #2196F3; }
+        .warning-icon { 
+            stroke: #ff9800; 
+            fill: #ff9800;
+            stroke-width: 1.5;
+        }
+        
+        /* Animação do loading */
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        /* Status Screen Styles */
-        .status-screen {
-            display: none;
-            background: #f5f5f5;
-            min-height: 100vh;
-            width: 100%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            padding: 20px;
+        
+        .loading-spinner {
+            animation: spin 2s linear infinite;
         }
-
-        .status-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding-top: 40px;
-        }
-
-        .status-header {
-            border-radius: 20px 20px 0 0;
-            padding: 40px 0 20px;
+        
+        /* Conteúdo */
+        .content {
+            padding: 40px 30px;
             text-align: center;
-            position: relative;
-            margin-bottom: 0;
         }
-
-        .status-header.success {
-            background: linear-gradient(135deg, #52c41a, #389e0d);
-        }
-
-        .status-header.processing {
-            background: linear-gradient(135deg, #fa8c16, #d46b08);
-        }
-
-        .status-header.error {
-            background: linear-gradient(135deg, #ff4d4f, #cf1322);
-        }
-
-        .status-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            border: 3px solid white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: -40px;
-            z-index: 10;
-        }
-
-        .status-content {
-            background: white;
-            border-radius: 0 0 20px 20px;
-            padding: 60px 40px 40px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            position: relative;
-        }
-
-        .status-title {
-            font-size: 28px;
-            font-weight: 600;
+        
+        h1 {
             color: #333;
-            text-align: center;
-            margin-bottom: 20px;
+            font-size: 28px;
+            margin-bottom: 15px;
+            font-weight: 600;
         }
-
-        .status-subtitle {
-            font-size: 16px;
+        
+        .subtitle {
             color: #666;
-            text-align: center;
+            font-size: 16px;
             margin-bottom: 30px;
             line-height: 1.5;
         }
-
-        .payment-details {
+        
+        /* Detalhes */
+        .details-box {
             background: #f8f9fa;
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #e9ecef;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: left;
         }
-
+        
         .detail-row {
             display: flex;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 15px;
         }
-
+        
         .detail-row:last-child {
             margin-bottom: 0;
         }
-
+        
         .detail-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #fff3cd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 16px;
-            flex-shrink: 0;
-        }
-
-        .detail-content {
-            flex: 1;
-        }
-
-        .detail-title {
-            font-size: 16px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 4px;
-        }
-
-        .detail-subtitle {
-            font-size: 14px;
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
             color: #666;
         }
-
-        .countdown-section {
-            text-align: center;
-            margin: 30px 0;
-            padding: 20px;
-            background: #e6f7ff;
+        
+        /* Botões */
+        .btn {
+            border: none;
+            padding: 16px 32px;
+            font-size: 18px;
             border-radius: 8px;
-            border: 1px solid #91d5ff;
-        }
-
-        .countdown-text {
-            font-size: 16px;
-            color: #1890ff;
-            margin-bottom: 8px;
-        }
-
-        .countdown-timer {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1890ff;
-        }
-
-        .action-button {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
             width: 100%;
-            max-width: 300px;
-            padding: 16px;
-            background: #1890ff;
+            margin-bottom: 15px;
+        }
+        
+        .btn-primary {
+            background: #2196F3;
             color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            margin: 16px auto;
-            display: block;
         }
-
-        .action-button:hover {
-            background: #40a9ff;
+        
+        .btn-primary:hover {
+            background: #1976D2;
         }
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            margin: 16px auto;
-            display: block;
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
         }
-
-        .action-button:hover {
-            background: #40a9ff;
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
         }
-
-        .back-link {
-            display: block;
-            text-align: center;
-            color: #1890ff;
+        
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #45a049;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #da190b;
+        }
+        
+        /* Links */
+        .link {
+            color: #2196F3;
             text-decoration: none;
             font-size: 16px;
-            padding: 12px;
+            transition: color 0.3s ease;
         }
-
-        .back-link:hover {
+        
+        .link:hover {
+            color: #1976D2;
             text-decoration: underline;
         }
-
-        .pix-info {
-            background: #f0f9ff;
-            border: 1px solid #b3d4fc;
+        
+        /* Box de alerta */
+        .alert-box {
             border-radius: 8px;
-            padding: 16px;
-            margin-top: 20px;
-            max-height: 70vh;
-            overflow-y: auto;
+            padding: 20px;
+            margin-bottom: 25px;
+            font-size: 16px;
         }
-
-        .pix-qr {
-            text-align: center;
-            margin: 20px 0;
+        
+        .alert-info {
+            background: #e8f4fd;
+            border: 1px solid #bee5f0;
+            color: #2196F3;
         }
-
-        .pix-qr img {
-            max-width: 200px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+        
+        .alert-error {
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+            color: #c62828;
         }
-
-        .pix-code {
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 12px;
-            font-family: monospace;
-            font-size: 12px;
-            word-break: break-all;
-            margin: 10px 0;
-        }
-
-        .copy-button {
-            background: #52c41a;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .copy-button:hover {
-            background: #389e0d;
-        }
-
-        .status-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            border: 3px solid white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: -40px;
-            z-index: 10;
-        }
-
-        @media (max-width: 600px) {
-            .checkout-container {
-                margin: 0 16px;
-                max-width: none;
-            }
-            
-            .checkout-header {
-                padding: 20px 24px 12px;
-            }
-            
-            .status-container {
-                padding-top: 20px;
-            }
-            
-            .status-content {
-                padding: 60px 24px 24px;
-            }
-            
-            .status-title {
-                font-size: 24px;
-            }
-            
-            .status-icon {
-                width: 70px;
-                height: 70px;
-                font-size: 32px;
-                bottom: -35px;
-            }
-            
-            .action-button {
-                margin: 12px auto;
-                padding: 14px;
-                font-size: 15px;
-                width: 90%;
-                max-width: 280px;
-                text-align: center;
-            }
-        }
-
-        .fade-out {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-
-        .fade-in {
-            opacity: 1;
-            transform: translateY(0);
+        
+        .alert-warning {
+            background: #fff3e0;
+            border: 1px solid #ffe0b2;
+            color: #e65100;
         }
     </style>
 </head>
 <body>
-    <!-- Checkout Original -->
-    <div id="checkoutSection" class="checkout-container">
-        <div class="checkout-header">
-            <h2>Teste de Prosperidade</h2>
-            <div class="amount-display">R$ 10,00</div>
-            <div class="completion-message">
-                <span class="icon">💡</span>
-                Complete o pagamento para acessar seu resultado personalizado
-            </div>
-        </div>
-
-        <div class="payment-container">
-            <div id="paymentBrick_container">
-                <div class="loading-state">
-                    <div class="spinner"></div>
-                    <p>Carregando formas de pagamento...</p>
+    <!-- Navegação -->
+    <div class="navigation">
+        <h2 style="margin-bottom: 20px;">Telas de Status de Pagamento</h2>
+        <button class="nav-button active" onclick="showScreen('success')">Sucesso</button>
+        <button class="nav-button" onclick="showScreen('error')">Erro</button>
+        <button class="nav-button" onclick="showScreen('processing')">Processando</button>
+        <button class="nav-button" onclick="showScreen('warning')">Aviso</button>
+    </div>
+    
+    <div class="screens-container">
+        <!-- Tela de Sucesso -->
+        <div class="screen active" id="success-screen">
+            <div class="header header-success">
+                <div class="icon-container">
+                    <svg class="success-icon" viewBox="0 0 24 24">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Tela de Status -->
-    <div id="statusScreen" class="status-screen">
-        <div class="status-container">
-            <div id="statusHeader" class="status-header success">
-                <div id="statusIcon" class="status-icon">✓</div>
-            </div>
-            <div class="status-content">
-                <h1 id="statusTitle" class="status-title">Seu pagamento foi aprovado</h1>
-                <p id="statusSubtitle" class="status-subtitle"></p>
+            <div class="content">
+                <h1>Pagamento Aprovado!</h1>
+                <p class="subtitle">
+                    Seu pagamento foi processado com sucesso. Você já pode acessar o conteúdo.
+                </p>
                 
-                <div class="payment-details">
+                <div class="details-box">
                     <div class="detail-row">
-                        <div class="detail-icon">💰</div>
-                        <div class="detail-content">
-                            <div class="detail-title">R$ 10,00</div>
-                            <div class="detail-subtitle">Teste de Prosperidade</div>
-                        </div>
-                    </div>
-                    
-                    <div class="detail-row">
-                        <div class="detail-icon">📋</div>
-                        <div class="detail-content">
-                            <div class="detail-title">Operação #<span id="paymentId"></span></div>
-                            <div class="detail-subtitle" id="operationDate"></div>
+                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        <div>
+                            <div style="font-weight: 500;">R$ 10,00</div>
+                            <div style="color: #666; font-size: 14px;">Teste de Prosperidade</div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Seção PIX (apenas para PIX) -->
-                <div id="pixSection" class="pix-info" style="display: none;">
-                    <h3>Pagamento PIX</h3>
-                    <div class="pix-qr">
-                        <img id="pixQRCode" src="" alt="QR Code PIX" style="display: none;">
-                    </div>
-                    <div>
-                        <strong>Código PIX para copiar:</strong>
-                        <div id="pixCode" class="pix-code"></div>
-                        <button class="copy-button" onclick="copyPixCode()">Copiar código</button>
-                    </div>
-                </div>
-
-                <div id="countdownSection" class="countdown-section">
-                    <div class="countdown-text">Redirecionando para seu resultado em:</div>
-                    <div id="countdownTimer" class="countdown-timer">10</div>
-                </div>
-
-                <button id="resultButton" class="action-button">
-                    Ver Resultado do Teste Agora
-                </button>
                 
-                <a href="https://quizfront.vercel.app" class="back-link">Voltar à página inicial</a>
+                <button class="btn btn-success">Acessar Conteúdo</button>
+                <a href="#" class="link">Voltar ao início</a>
+            </div>
+        </div>
+        
+        <!-- Tela de Erro -->
+        <div class="screen" id="error-screen">
+            <div class="header header-error">
+                <div class="icon-container">
+                    <svg class="error-icon" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </div>
+            </div>
+            <div class="content">
+                <h1>Pagamento Recusado</h1>
+                <p class="subtitle">
+                    Não foi possível processar seu pagamento. Por favor, verifique seus dados e tente novamente.
+                </p>
+                
+                <div class="alert-box alert-error">
+                    <strong>Erro:</strong> Cartão recusado pela operadora
+                </div>
+                
+                <button class="btn btn-danger">Tentar Novamente</button>
+                <button class="btn btn-secondary">Usar Outro Método</button>
+                <a href="#" class="link">Cancelar</a>
+            </div>
+        </div>
+        
+        <!-- Tela de Processando -->
+        <div class="screen" id="processing-screen">
+            <div class="header header-processing">
+                <div class="icon-container">
+                    <svg class="processing-icon loading-spinner" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke-opacity="0.3"></circle>
+                        <path d="M12 2 C12 2, 12 12, 12 12" stroke-linecap="round"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="content">
+                <h1>Processando Pagamento</h1>
+                <p class="subtitle">
+                    Estamos processando seu pagamento. Isso pode levar alguns segundos...
+                </p>
+                
+                <div class="alert-box alert-info">
+                    Por favor, não feche esta janela
+                </div>
+                
+                <div style="margin: 30px 0;">
+                    <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div style="background: #2196F3; height: 100%; width: 60%; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+                
+                <p style="color: #666; font-size: 14px;">Verificando dados do cartão...</p>
+            </div>
+        </div>
+        
+        <!-- Tela de Aviso -->
+        <div class="screen" id="warning-screen">
+            <div class="header header-warning">
+                <div class="icon-container">
+                    <svg class="warning-icon" viewBox="0 0 24 24">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13" stroke="white" stroke-width="2"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17" stroke="white" stroke-width="2"></line>
+                    </svg>
+                </div>
+            </div>
+            <div class="content">
+                <h1>Atenção Necessária</h1>
+                <p class="subtitle">
+                    Seu pagamento está pendente de confirmação. Precisamos verificar algumas informações.
+                </p>
+                
+                <div class="alert-box alert-warning">
+                    <strong>Pendente:</strong> Aguardando confirmação do banco
+                </div>
+                
+                <div class="details-box">
+                    <p style="color: #666; line-height: 1.6;">
+                        Você receberá um e-mail assim que o pagamento for confirmado. 
+                        Isso geralmente leva de 1 a 3 horas.
+                    </p>
+                </div>
+                
+                <button class="btn btn-primary">Verificar Status</button>
+                <a href="#" class="link">Voltar ao início</a>
             </div>
         </div>
     </div>
-
+    
     <script>
-        // ============================================
-        // CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
-        // ============================================
-        
-        const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
-        const PUBLIC_KEY = 'TEST-d1dd4fcc-3ec9-4935-88e2-8784c22f4626';
-        
-        // Obter UID da URL ou gerar um para teste
-        const urlParams = new URLSearchParams(window.location.search);
-        const userUID = urlParams.get('uid') || `test-${Date.now()}`;
-        
-        console.log('🆔 UID do usuário:', userUID);
-
-        // Inicializar Mercado Pago
-        const mp = new MercadoPago(PUBLIC_KEY, { locale: 'pt' });
-        const bricksBuilder = mp.bricks();
-
-        // ============================================
-        // FUNÇÕES DE STATUS SCREEN
-        // ============================================
-
-        function showStatusScreen(type = 'success', paymentData = {}) {
-            const checkoutSection = document.getElementById('checkoutSection');
-            const statusScreen = document.getElementById('statusScreen');
-            const statusHeader = document.getElementById('statusHeader');
-            const statusIcon = document.getElementById('statusIcon');
-            const statusTitle = document.getElementById('statusTitle');
-            const statusSubtitle = document.getElementById('statusSubtitle');
-            const countdownSection = document.getElementById('countdownSection');
-            const resultButton = document.getElementById('resultButton');
-            const operationDate = document.getElementById('operationDate');
-            const paymentId = document.getElementById('paymentId');
-            const pixSection = document.getElementById('pixSection');
-
-            // Configurar data/hora atual
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('pt-BR', { 
-                day: 'numeric', 
-                month: 'long' 
-            }) + ' às ' + now.toLocaleTimeString('pt-BR', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            }) + ' h.';
-            operationDate.textContent = dateStr;
-
-            // Configurar ID do pagamento
-            if (paymentData.id) {
-                paymentId.textContent = paymentData.id;
-            }
-
-            // Ocultar checkout com transição
-            checkoutSection.style.transition = 'all 0.3s ease';
-            checkoutSection.classList.add('fade-out');
-
-            setTimeout(() => {
-                checkoutSection.style.display = 'none';
-                
-                if (type === 'success') {
-                    statusHeader.className = 'status-header success';
-                    statusIcon.textContent = '✓';
-                    statusTitle.textContent = 'Seu pagamento foi aprovado';
-                    statusSubtitle.textContent = 'Parabéns! Agora você pode acessar seu resultado personalizado do Teste de Prosperidade.';
-                    resultButton.textContent = 'Ver Resultado do Teste Agora';
-                    countdownSection.style.display = 'block';
-                    pixSection.style.display = 'none';
-                    
-                    // Iniciar countdown de 10 segundos
-                    startCountdown();
-                    
-                } else if (type === 'pix') {
-                    statusHeader.className = 'status-header processing';
-                    statusIcon.textContent = '⏳';
-                    statusTitle.textContent = 'Pague com PIX';
-                    statusSubtitle.textContent = 'Escaneie o QR Code ou copie o código PIX para concluir seu pagamento.';
-                    resultButton.textContent = 'Já paguei - Ver meu resultado';
-                    countdownSection.style.display = 'none';
-                    
-                    // Mostrar informações do PIX
-                    if (paymentData.qr_code_base64) {
-                        const qrImg = document.getElementById('pixQRCode');
-                        qrImg.src = `data:image/png;base64,${paymentData.qr_code_base64}`;
-                        qrImg.style.display = 'block';
-                    }
-                    
-                    if (paymentData.qr_code) {
-                        document.getElementById('pixCode').textContent = paymentData.qr_code;
-                        window.pixCodeToCopy = paymentData.qr_code;
-                    }
-                    
-                    pixSection.style.display = 'block';
-                    
-                } else if (type === 'processing') {
-                    statusHeader.className = 'status-header processing';
-                    statusIcon.textContent = '⏳';
-                    statusTitle.textContent = 'Processando seu pagamento';
-                    statusSubtitle.textContent = 'Aguarde enquanto confirmamos seu pagamento...';
-                    countdownSection.style.display = 'none';
-                    pixSection.style.display = 'none';
-                    resultButton.textContent = 'Aguarde...';
-                    resultButton.disabled = true;
-                    
-                } else if (type === 'error') {
-                    statusHeader.className = 'status-header error';
-                    statusIcon.textContent = '❌';
-                    statusTitle.textContent = 'Erro no pagamento';
-                    statusSubtitle.textContent = 'Não foi possível processar seu pagamento. Tente novamente com outro método de pagamento.';
-                    countdownSection.style.display = 'none';
-                    pixSection.style.display = 'none';
-                    resultButton.textContent = 'Tentar Novamente';
-                    resultButton.onclick = () => goBack();
-                }
-
-                // Mostrar tela de status
-                statusScreen.style.display = 'block';
-                statusScreen.classList.add('fade-in');
-            }, 300);
-        }
-
-        // Função de countdown
-        function startCountdown() {
-            let seconds = 10;
-            const timer = document.getElementById('countdownTimer');
+        function showScreen(screenType) {
+            // Remove active de todos os botões e telas
+            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
             
-            const interval = setInterval(() => {
-                seconds--;
-                timer.textContent = seconds;
-                
-                if (seconds <= 0) {
-                    clearInterval(interval);
-                    redirectToResult();
-                }
-            }, 1000);
-
-            // Salvar interval para poder cancelar se usuário clicar no botão
-            window.countdownInterval = interval;
+            // Ativa o botão e tela selecionados
+            event.target.classList.add('active');
+            document.getElementById(screenType + '-screen').classList.add('active');
         }
-
-        // Função para redirecionar ao resultado
-        function redirectToResult() {
-            if (window.countdownInterval) {
-                clearInterval(window.countdownInterval);
-            }
-            // Redirecionar para página de resultado com UID
-            window.location.href = `https://www.suellenseragi.com.br/resultado?uid=${userUID}`;
-        }
-
-        // Função para voltar
-        function goBack() {
-            const checkoutSection = document.getElementById('checkoutSection');
-            const statusScreen = document.getElementById('statusScreen');
-            
-            statusScreen.style.display = 'none';
-            checkoutSection.style.display = 'flex';
-            checkoutSection.classList.remove('fade-out');
-            checkoutSection.classList.add('fade-in');
-        }
-
-        // Função para copiar código PIX
-        function copyPixCode() {
-            if (window.pixCodeToCopy) {
-                navigator.clipboard.writeText(window.pixCodeToCopy).then(() => {
-                    const button = document.querySelector('.copy-button');
-                    const originalText = button.textContent;
-                    button.textContent = 'Copiado!';
-                    button.style.background = '#389e0d';
-                    
-                    setTimeout(() => {
-                        button.textContent = originalText;
-                        button.style.background = '#52c41a';
-                    }, 2000);
-                });
-            }
-        }
-
-        // Event listener para botão de resultado
-        document.getElementById('resultButton').onclick = () => {
-            redirectToResult();
-        };
-
-        // ============================================
-        // PAYMENT BRICK CONFIGURATION
-        // ============================================
-
-        const renderPaymentBrick = async (bricksBuilder) => {
-            try {
-                const settings = {
-                    initialization: {
-                        amount: 10, // R$ 10,00 (valor correto)
-                        payer: {
-                            firstName: "",
-                            lastName: "",
-                            email: "",
-                        },
-                    },
-                    customization: {
-                        visual: {
-                            style: {
-                                theme: "default",
-                            },
-                        },
-                        paymentMethods: {
-                            creditCard: ["visa", "master"], // Apenas Visa e Master, sem ELO
-                            bankTransfer: ["pix"],
-                            maxInstallments: 1,
-                            excludedPaymentMethods: [
-                                { id: "elo" },
-                                { id: "hipercard" },
-                                { id: "debelo" }
-                            ]
-                        },
-                    },
-                    callbacks: {
-                        onReady: () => {
-                            console.log('✅ Payment Brick carregado com sucesso');
-                            
-                            // REMOVER O LOADING quando o brick estiver pronto
-                            const loadingElement = document.querySelector('.loading-state');
-                            if (loadingElement) {
-                                loadingElement.style.display = 'none';
-                            }
-                        },
-                        onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('💳 Dados do pagamento:', formData);
-                            console.log('💳 Método selecionado:', selectedPaymentMethod);
-                            
-                            // Mostrar status de processamento
-                            showStatusScreen('processing');
-                            
-                            return new Promise((resolve, reject) => {
-                                // Adicionar UID aos dados
-                                const paymentData = {
-                                    ...formData,
-                                    uid: userUID,
-                                    description: 'Teste de Prosperidade',
-                                    transaction_amount: 10 // Garantir R$ 10,00
-                                };
-
-                                // Enviar para backend
-                                fetch(`${BACKEND_URL}/api/process_payment`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-Idempotency-Key': `${userUID}-${Date.now()}`
-                                    },
-                                    body: JSON.stringify(paymentData),
-                                })
-                                .then(response => {
-                                    if (!response.ok) {
-                                        throw new Error(`HTTP ${response.status}`);
-                                    }
-                                    return response.json();
-                                })
-                                .then(result => {
-                                    console.log('✅ Resposta do backend:', result);
-                                    
-                                    if (result.status === 'approved') {
-                                        // Pagamento aprovado - cartão de crédito
-                                        showStatusScreen('success', result);
-                                        resolve();
-                                    } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        // PIX criado - mostrar QR Code
-                                        showStatusScreen('pix', result);
-                                        resolve();
-                                    } else if (result.status === 'pending') {
-                                        // Outros casos pendentes
-                                        showStatusScreen('processing', result);
-                                        resolve();
-                                    } else {
-                                        // Erro ou rejeitado
-                                        showStatusScreen('error', result);
-                                        reject();
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('❌ Erro no pagamento:', error);
-                                    showStatusScreen('error');
-                                    reject();
-                                });
-                            });
-                        },
-                        onError: (error) => {
-                            console.error('❌ Erro Payment Brick:', error);
-                            console.log('🔍 Detalhes do erro:', JSON.stringify(error, null, 2));
-                            
-                            // Verificar se é erro relacionado ao ELO ou cartão não suportado
-                            if (error.message && error.message.includes('card')) {
-                                console.log('⚠️ Erro relacionado a cartão não suportado');
-                            }
-                            
-                            // Limpar brick antes de tentar recriar
-                            if (window.paymentBrickController) {
-                                try {
-                                    window.paymentBrickController.unmount();
-                                } catch (e) {
-                                    console.log('Brick já estava desmontado');
-                                }
-                                window.paymentBrickController = null;
-                            }
-                            
-                            // Tentar recriar o brick com configuração mais simples
-                            setTimeout(() => {
-                                console.log('🔄 Tentando recriar Payment Brick...');
-                                renderSimplePaymentBrick(bricksBuilder);
-                            }, 2000);
-                        },
-                    },
-                };
-
-                window.paymentBrickController = await bricksBuilder.create(
-                    "payment",
-                    "paymentBrick_container",
-                    settings
-                );
-                
-                console.log('✅ Payment Brick criado com sucesso');
-                
-                // GARANTIR que o loading seja removido após criação
-                setTimeout(() => {
-                    const loadingElement = document.querySelector('.loading-state');
-                    if (loadingElement) {
-                        loadingElement.style.display = 'none';
-                    }
-                }, 2000);
-                
-            } catch (error) {
-                console.error('❌ Erro ao criar Payment Brick:', error);
-                console.log('🔄 Tentando configuração simples...');
-                renderSimplePaymentBrick(bricksBuilder);
-            }
-        };
-
-        // Função com configuração mais simples para fallback
-        const renderSimplePaymentBrick = async (bricksBuilder) => {
-            try {
-                document.getElementById('paymentBrick_container').innerHTML = `
-                    <div class="loading-state">
-                        <div class="spinner"></div>
-                        <p>Carregando sistema básico de pagamento...</p>
-                    </div>
-                `;
-
-                // Aguardar um pouco antes de tentar recriar
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                const simpleSettings = {
-                    initialization: {
-                        amount: 10, // R$ 10,00 correto
-                    },
-                    customization: {
-                        paymentMethods: {
-                            creditCard: ["visa", "master"], // Apenas cartões seguros
-                            bankTransfer: ["pix"],
-                            maxInstallments: 1,
-                            excludedPaymentMethods: [
-                                { id: "elo" },
-                                { id: "hipercard" }
-                            ]
-                        },
-                    },
-                    callbacks: {
-                        onReady: () => {
-                            console.log('✅ Payment Brick simples carregado');
-                            
-                            // REMOVER O LOADING no brick simples também
-                            const loadingElement = document.querySelector('.loading-state');
-                            if (loadingElement) {
-                                loadingElement.style.display = 'none';
-                            }
-                        },
-                        onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('💳 Dados do pagamento (simples):', formData);
-                            
-                            showStatusScreen('processing');
-                            
-                            return new Promise((resolve, reject) => {
-                                const paymentData = {
-                                    ...formData,
-                                    uid: userUID,
-                                    description: 'Teste de Prosperidade',
-                                    transaction_amount: 10 // Garantir R$ 10,00
-                                };
-
-                                fetch(`${BACKEND_URL}/api/process_payment`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-Idempotency-Key': `${userUID}-${Date.now()}`
-                                    },
-                                    body: JSON.stringify(paymentData),
-                                })
-                                .then(response => response.json())
-                                .then(result => {
-                                    console.log('✅ Resposta do backend (simples):', result);
-                                    
-                                    if (result.status === 'approved') {
-                                        showStatusScreen('success', result);
-                                        resolve();
-                                    } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        showStatusScreen('pix', result);
-                                        resolve();
-                                    } else {
-                                        showStatusScreen('error', result);
-                                        reject();
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('❌ Erro no pagamento (simples):', error);
-                                    showStatusScreen('error');
-                                    reject();
-                                });
-                            });
-                        },
-                        onError: (error) => {
-                            console.error('❌ Erro Payment Brick simples:', error);
-                            showStatusScreen('error');
-                        },
-                    },
-                };
-
-                window.paymentBrickController = await bricksBuilder.create(
-                    "payment",
-                    "paymentBrick_container",
-                    simpleSettings
-                );
-                
-                console.log('✅ Payment Brick simples criado');
-                
-                // GARANTIR que o loading seja removido no brick simples
-                setTimeout(() => {
-                    const loadingElement = document.querySelector('.loading-state');
-                    if (loadingElement) {
-                        loadingElement.style.display = 'none';
-                    }
-                }, 2000);
-                
-            } catch (error) {
-                console.error('❌ Erro crítico no Payment Brick:', error);
-                document.getElementById('paymentBrick_container').innerHTML = `
-                    <div class="loading-state">
-                        <p style="color: #ff4d4f;">Erro ao carregar pagamentos</p>
-                        <p style="font-size: 14px; color: #666;">Recarregue a página para tentar novamente</p>
-                        <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                            Recarregar Página
-                        </button>
-                    </div>
-                `;
-            }
-        };
-
-        // ============================================
-        // INICIALIZAÇÃO DA APLICAÇÃO
-        // ============================================
-
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Inicializando checkout do Teste de Prosperidade');
-            console.log('🆔 UID do usuário:', userUID);
-            console.log('🌐 Backend URL:', BACKEND_URL);
-            
-            renderPaymentBrick(bricksBuilder);
-        });
-
-        // ============================================
-        // FUNÇÕES UTILITÁRIAS
-        // ============================================
-
-        // Função para testar conexão com backend
-        async function testBackendConnection() {
-            try {
-                const response = await fetch(`${BACKEND_URL}/health`);
-                const data = await response.json();
-                console.log('🏥 Status do backend:', data);
-                return data.status === 'OK';
-            } catch (error) {
-                console.error('❌ Backend offline:', error);
-                return false;
-            }
-        }
-
-        // Testar conexão na inicialização
-        testBackendConnection();
     </script>
 </body>
 </html>
