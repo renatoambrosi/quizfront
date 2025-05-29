@@ -641,7 +641,7 @@
                             atm: "off",
                             onboarding_credits: "off",
                             wallet_purchase: "off",
-                            maxInstallments: 1 // Apenas 1x
+                            maxInstallments: 1
                         },
                     },
                     callbacks: {
@@ -708,7 +708,13 @@
                         },
                         onError: (error) => {
                             console.error('❌ Erro Payment Brick:', error);
-                            showStatusScreen('error');
+                            console.log('🔍 Detalhes do erro:', JSON.stringify(error, null, 2));
+                            
+                            // Tentar recriar o brick com configuração mais simples
+                            setTimeout(() => {
+                                console.log('🔄 Tentando recriar Payment Brick...');
+                                renderSimplePaymentBrick(bricksBuilder);
+                            }, 2000);
                         },
                     },
                 };
@@ -723,10 +729,101 @@
                 
             } catch (error) {
                 console.error('❌ Erro ao criar Payment Brick:', error);
+                console.log('🔄 Tentando configuração simples...');
+                renderSimplePaymentBrick(bricksBuilder);
+            }
+        };
+
+        // Função com configuração mais simples para fallback
+        const renderSimplePaymentBrick = async (bricksBuilder) => {
+            try {
                 document.getElementById('paymentBrick_container').innerHTML = `
                     <div class="loading-state">
-                        <p style="color: #ff4d4f;">Erro ao carregar o sistema de pagamento</p>
-                        <p style="font-size: 14px; color: #666;">Verifique sua conexão e recarregue a página</p>
+                        <div class="spinner"></div>
+                        <p>Recarregando sistema de pagamento...</p>
+                    </div>
+                `;
+
+                const simpleSettings = {
+                    initialization: {
+                        amount: 1000,
+                    },
+                    customization: {
+                        paymentMethods: {
+                            creditCard: "all",
+                            bankTransfer: "all"
+                        },
+                    },
+                    callbacks: {
+                        onReady: () => {
+                            console.log('✅ Payment Brick simples carregado');
+                        },
+                        onSubmit: ({ selectedPaymentMethod, formData }) => {
+                            console.log('💳 Dados do pagamento (simples):', formData);
+                            
+                            showStatusScreen('processing');
+                            
+                            return new Promise((resolve, reject) => {
+                                const paymentData = {
+                                    ...formData,
+                                    uid: userUID,
+                                    description: 'Teste de Prosperidade'
+                                };
+
+                                fetch(`${BACKEND_URL}/api/process_payment`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Idempotency-Key': `${userUID}-${Date.now()}`
+                                    },
+                                    body: JSON.stringify(paymentData),
+                                })
+                                .then(response => response.json())
+                                .then(result => {
+                                    console.log('✅ Resposta do backend (simples):', result);
+                                    
+                                    if (result.status === 'approved') {
+                                        showStatusScreen('success', result);
+                                        resolve();
+                                    } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
+                                        showStatusScreen('pix', result);
+                                        resolve();
+                                    } else {
+                                        showStatusScreen('error', result);
+                                        reject();
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('❌ Erro no pagamento (simples):', error);
+                                    showStatusScreen('error');
+                                    reject();
+                                });
+                            });
+                        },
+                        onError: (error) => {
+                            console.error('❌ Erro Payment Brick simples:', error);
+                            showStatusScreen('error');
+                        },
+                    },
+                };
+
+                window.paymentBrickController = await bricksBuilder.create(
+                    "payment",
+                    "paymentBrick_container",
+                    simpleSettings
+                );
+                
+                console.log('✅ Payment Brick simples criado');
+                
+            } catch (error) {
+                console.error('❌ Erro crítico no Payment Brick:', error);
+                document.getElementById('paymentBrick_container').innerHTML = `
+                    <div class="loading-state">
+                        <p style="color: #ff4d4f;">Erro ao carregar pagamentos</p>
+                        <p style="font-size: 14px; color: #666;">Recarregue a página para tentar novamente</p>
+                        <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Recarregar Página
+                        </button>
                     </div>
                 `;
             }
