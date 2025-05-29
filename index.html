@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - Payment Brick</title>
+    <title>Checkout - Teste de Prosperidade</title>
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
         * {
@@ -277,6 +277,50 @@
             text-decoration: underline;
         }
 
+        .pix-info {
+            background: #f0f9ff;
+            border: 1px solid #b3d4fc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .pix-qr {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .pix-qr img {
+            max-width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .pix-code {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+
+        .copy-button {
+            background: #52c41a;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .copy-button:hover {
+            background: #389e0d;
+        }
+
         @media (max-width: 600px) {
             .checkout-container {
                 margin: 0 16px;
@@ -348,14 +392,6 @@
                         <div class="detail-icon">💰</div>
                         <div class="detail-content">
                             <div class="detail-title">R$ 10,00</div>
-                            <div class="detail-subtitle">Pago com Mercado Pago</div>
-                        </div>
-                    </div>
-                    
-                    <div class="detail-row">
-                        <div class="detail-icon">🛍️</div>
-                        <div class="detail-content">
-                            <div class="detail-title">Descrição</div>
                             <div class="detail-subtitle">Teste de Prosperidade</div>
                         </div>
                     </div>
@@ -363,9 +399,22 @@
                     <div class="detail-row">
                         <div class="detail-icon">📋</div>
                         <div class="detail-content">
-                            <div class="detail-title">Operação #Código de referência externa</div>
+                            <div class="detail-title">Operação #<span id="paymentId"></span></div>
                             <div class="detail-subtitle" id="operationDate"></div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Seção PIX (apenas para PIX) -->
+                <div id="pixSection" class="pix-info" style="display: none;">
+                    <h3>Pagamento PIX</h3>
+                    <div class="pix-qr">
+                        <img id="pixQRCode" src="" alt="QR Code PIX" style="display: none;">
+                    </div>
+                    <div>
+                        <strong>Código PIX para copiar:</strong>
+                        <div id="pixCode" class="pix-code"></div>
+                        <button class="copy-button" onclick="copyPixCode()">Copiar código</button>
                     </div>
                 </div>
 
@@ -378,20 +427,34 @@
                     Ver Resultado do Teste Agora
                 </button>
                 
-                <a href="#" class="back-link" onclick="goBack()">Voltar à loja</a>
+                <a href="https://quizfront.vercel.app" class="back-link">Voltar à página inicial</a>
             </div>
         </div>
     </div>
 
     <script>
+        // ============================================
+        // CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
+        // ============================================
+        
+        const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
+        const PUBLIC_KEY = 'TEST-d1dd4fcc-3ec9-4935-88e2-8784c22f4626';
+        
+        // Obter UID da URL ou gerar um para teste
+        const urlParams = new URLSearchParams(window.location.search);
+        const userUID = urlParams.get('uid') || `test-${Date.now()}`;
+        
+        console.log('🆔 UID do usuário:', userUID);
+
         // Inicializar Mercado Pago
-        const mp = new MercadoPago('TEST-d1dd4fcc-3ec9-4935-88e2-8784c22f4626', { 
-            locale: 'pt' 
-        });
+        const mp = new MercadoPago(PUBLIC_KEY, { locale: 'pt' });
         const bricksBuilder = mp.bricks();
 
-        // Função para mostrar tela de status
-        function showStatusScreen(type = 'success') {
+        // ============================================
+        // FUNÇÕES DE STATUS SCREEN
+        // ============================================
+
+        function showStatusScreen(type = 'success', paymentData = {}) {
             const checkoutSection = document.getElementById('checkoutSection');
             const statusScreen = document.getElementById('statusScreen');
             const statusHeader = document.getElementById('statusHeader');
@@ -401,6 +464,8 @@
             const countdownSection = document.getElementById('countdownSection');
             const resultButton = document.getElementById('resultButton');
             const operationDate = document.getElementById('operationDate');
+            const paymentId = document.getElementById('paymentId');
+            const pixSection = document.getElementById('pixSection');
 
             // Configurar data/hora atual
             const now = new Date();
@@ -412,6 +477,11 @@
                 minute: '2-digit' 
             }) + ' h.';
             operationDate.textContent = dateStr;
+
+            // Configurar ID do pagamento
+            if (paymentData.id) {
+                paymentId.textContent = paymentData.id;
+            }
 
             // Ocultar checkout com transição
             checkoutSection.style.transition = 'all 0.3s ease';
@@ -426,25 +496,52 @@
                     statusTitle.textContent = 'Seu pagamento foi aprovado';
                     statusSubtitle.textContent = 'Parabéns! Agora você pode acessar seu resultado personalizado do Teste de Prosperidade.';
                     resultButton.textContent = 'Ver Resultado do Teste Agora';
+                    countdownSection.style.display = 'block';
+                    pixSection.style.display = 'none';
                     
                     // Iniciar countdown de 10 segundos
                     startCountdown();
                     
+                } else if (type === 'pix') {
+                    statusHeader.className = 'status-header processing';
+                    statusIcon.textContent = '⏳';
+                    statusTitle.textContent = 'Pague com PIX';
+                    statusSubtitle.textContent = 'Escaneie o QR Code ou copie o código PIX para concluir seu pagamento.';
+                    resultButton.textContent = 'Já paguei - Ver meu resultado';
+                    countdownSection.style.display = 'none';
+                    
+                    // Mostrar informações do PIX
+                    if (paymentData.qr_code_base64) {
+                        const qrImg = document.getElementById('pixQRCode');
+                        qrImg.src = `data:image/png;base64,${paymentData.qr_code_base64}`;
+                        qrImg.style.display = 'block';
+                    }
+                    
+                    if (paymentData.qr_code) {
+                        document.getElementById('pixCode').textContent = paymentData.qr_code;
+                        window.pixCodeToCopy = paymentData.qr_code;
+                    }
+                    
+                    pixSection.style.display = 'block';
+                    
                 } else if (type === 'processing') {
                     statusHeader.className = 'status-header processing';
-                    statusIcon.textContent = '!';
-                    statusTitle.textContent = 'Estamos processando seu pagamento';
-                    statusSubtitle.textContent = 'Não se preocupe, em até 2 dias úteis, vamos te avisar por e-mail se o pagamento foi aprovado.';
+                    statusIcon.textContent = '⏳';
+                    statusTitle.textContent = 'Processando seu pagamento';
+                    statusSubtitle.textContent = 'Aguarde enquanto confirmamos seu pagamento...';
                     countdownSection.style.display = 'none';
-                    resultButton.textContent = 'Entendi';
+                    pixSection.style.display = 'none';
+                    resultButton.textContent = 'Aguarde...';
+                    resultButton.disabled = true;
                     
                 } else if (type === 'error') {
                     statusHeader.className = 'status-header error';
-                    statusIcon.textContent = '!';
-                    statusTitle.textContent = 'Não foi possível processar seu pagamento';
-                    statusSubtitle.textContent = '';
+                    statusIcon.textContent = '❌';
+                    statusTitle.textContent = 'Erro no pagamento';
+                    statusSubtitle.textContent = 'Não foi possível processar seu pagamento. Tente novamente com outro método de pagamento.';
                     countdownSection.style.display = 'none';
-                    resultButton.textContent = 'Escolher outro meio de pagamento';
+                    pixSection.style.display = 'none';
+                    resultButton.textContent = 'Tentar Novamente';
                     resultButton.onclick = () => goBack();
                 }
 
@@ -458,7 +555,6 @@
         function startCountdown() {
             let seconds = 10;
             const timer = document.getElementById('countdownTimer');
-            const countdownSection = document.getElementById('countdownSection');
             
             const interval = setInterval(() => {
                 seconds--;
@@ -479,9 +575,8 @@
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
             }
-            // Aqui você faria o redirecionamento real
-            alert('🎉 Redirecionando para seu Resultado do Teste de Prosperidade!');
-            // window.location.href = '/resultado-teste-prosperidade';
+            // Redirecionar para página de resultado com UID
+            window.location.href = `https://www.suellenseragi.com.br/resultado?uid=${userUID}`;
         }
 
         // Função para voltar
@@ -495,12 +590,32 @@
             checkoutSection.classList.add('fade-in');
         }
 
-        // Event listeners
+        // Função para copiar código PIX
+        function copyPixCode() {
+            if (window.pixCodeToCopy) {
+                navigator.clipboard.writeText(window.pixCodeToCopy).then(() => {
+                    const button = document.querySelector('.copy-button');
+                    const originalText = button.textContent;
+                    button.textContent = 'Copiado!';
+                    button.style.background = '#389e0d';
+                    
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.style.background = '#52c41a';
+                    }, 2000);
+                });
+            }
+        }
+
+        // Event listener para botão de resultado
         document.getElementById('resultButton').onclick = () => {
             redirectToResult();
         };
 
-        // Renderizar Payment Brick
+        // ============================================
+        // PAYMENT BRICK CONFIGURATION
+        // ============================================
+
         const renderPaymentBrick = async (bricksBuilder) => {
             try {
                 const settings = {
@@ -526,29 +641,74 @@
                             atm: "off",
                             onboarding_credits: "off",
                             wallet_purchase: "off",
-                            maxInstallments: 3
+                            maxInstallments: 1 // Apenas 1x
                         },
                     },
                     callbacks: {
                         onReady: () => {
-                            console.log('Payment Brick carregado com sucesso');
+                            console.log('✅ Payment Brick carregado com sucesso');
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('Dados do pagamento:', formData);
-                            return new Promise((resolve) => {
-                                // Simular processamento
-                                setTimeout(() => {
-                                    // 85% de chance de sucesso para demonstração
-                                    const success = Math.random() > 0.15;
-                                    showStatusScreen(success ? 'success' : 'error');
-                                    resolve();
-                                }, 1500);
+                            console.log('💳 Dados do pagamento:', formData);
+                            console.log('💳 Método selecionado:', selectedPaymentMethod);
+                            
+                            // Mostrar status de processamento
+                            showStatusScreen('processing');
+                            
+                            return new Promise((resolve, reject) => {
+                                // Adicionar UID aos dados
+                                const paymentData = {
+                                    ...formData,
+                                    uid: userUID,
+                                    description: 'Teste de Prosperidade'
+                                };
+
+                                // Enviar para backend
+                                fetch(`${BACKEND_URL}/api/process_payment`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Idempotency-Key': `${userUID}-${Date.now()}`
+                                    },
+                                    body: JSON.stringify(paymentData),
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`HTTP ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
+                                .then(result => {
+                                    console.log('✅ Resposta do backend:', result);
+                                    
+                                    if (result.status === 'approved') {
+                                        // Pagamento aprovado - cartão de crédito
+                                        showStatusScreen('success', result);
+                                        resolve();
+                                    } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
+                                        // PIX criado - mostrar QR Code
+                                        showStatusScreen('pix', result);
+                                        resolve();
+                                    } else if (result.status === 'pending') {
+                                        // Outros casos pendentes
+                                        showStatusScreen('processing', result);
+                                        resolve();
+                                    } else {
+                                        // Erro ou rejeitado
+                                        showStatusScreen('error', result);
+                                        reject();
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('❌ Erro no pagamento:', error);
+                                    showStatusScreen('error');
+                                    reject();
+                                });
                             });
                         },
                         onError: (error) => {
-                            console.error('Erro Payment Brick:', error);
-                            // Não mostrar tela de erro automaticamente aqui
-                            // showStatusScreen('error');
+                            console.error('❌ Erro Payment Brick:', error);
+                            showStatusScreen('error');
                         },
                     },
                 };
@@ -559,11 +719,10 @@
                     settings
                 );
                 
-                console.log('Payment Brick criado com sucesso');
+                console.log('✅ Payment Brick criado com sucesso');
                 
             } catch (error) {
-                console.error('Erro ao criar Payment Brick:', error);
-                // Mostrar erro no console mas não redirecionar automaticamente
+                console.error('❌ Erro ao criar Payment Brick:', error);
                 document.getElementById('paymentBrick_container').innerHTML = `
                     <div class="loading-state">
                         <p style="color: #ff4d4f;">Erro ao carregar o sistema de pagamento</p>
@@ -573,11 +732,37 @@
             }
         };
 
-        // Executar quando página carregar
+        // ============================================
+        // INICIALIZAÇÃO DA APLICAÇÃO
+        // ============================================
+
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('Inicializando Payment Brick...');
+            console.log('🚀 Inicializando checkout do Teste de Prosperidade');
+            console.log('🆔 UID do usuário:', userUID);
+            console.log('🌐 Backend URL:', BACKEND_URL);
+            
             renderPaymentBrick(bricksBuilder);
         });
+
+        // ============================================
+        // FUNÇÕES UTILITÁRIAS
+        // ============================================
+
+        // Função para testar conexão com backend
+        async function testBackendConnection() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/health`);
+                const data = await response.json();
+                console.log('🏥 Status do backend:', data);
+                return data.status === 'OK';
+            } catch (error) {
+                console.error('❌ Backend offline:', error);
+                return false;
+            }
+        }
+
+        // Testar conexão na inicialização
+        testBackendConnection();
     </script>
 </body>
 </html>
