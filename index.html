@@ -149,8 +149,10 @@
             color: white;
             font-size: 36px;
             font-weight: bold;
-            position: relative;
-            top: 40px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -40px;
             z-index: 10;
         }
 
@@ -500,63 +502,82 @@
 
         // Renderizar Payment Brick
         const renderPaymentBrick = async (bricksBuilder) => {
-            const settings = {
-                initialization: {
-                    amount: 1000, // R$ 10,00
-                    payer: {
-                        firstName: "",
-                        lastName: "",
-                        email: "",
-                    },
-                },
-                customization: {
-                    visual: {
-                        style: {
-                            theme: "default",
+            try {
+                const settings = {
+                    initialization: {
+                        amount: 1000, // R$ 10,00
+                        payer: {
+                            firstName: "",
+                            lastName: "",
+                            email: "",
                         },
                     },
-                    paymentMethods: {
-                        creditCard: "all",
-                        debitCard: "off",
-                        ticket: "off",
-                        bankTransfer: "all", // Pix
-                        atm: "off",
-                        onboarding_credits: "off",
-                        wallet_purchase: "off",
-                        maxInstallments: 3
+                    customization: {
+                        visual: {
+                            style: {
+                                theme: "default",
+                            },
+                        },
+                        paymentMethods: {
+                            creditCard: "all",
+                            debitCard: "off",
+                            ticket: "off",
+                            bankTransfer: "all", // Pix
+                            atm: "off",
+                            onboarding_credits: "off",
+                            wallet_purchase: "off",
+                            maxInstallments: 3
+                        },
                     },
-                },
-                callbacks: {
-                    onReady: () => {
-                        console.log('Payment Brick pronto');
+                    callbacks: {
+                        onReady: () => {
+                            console.log('Payment Brick carregado com sucesso');
+                        },
+                        onSubmit: ({ selectedPaymentMethod, formData }) => {
+                            console.log('Dados do pagamento:', formData);
+                            return new Promise((resolve) => {
+                                // Simular processamento
+                                setTimeout(() => {
+                                    // 85% de chance de sucesso para demonstração
+                                    const success = Math.random() > 0.15;
+                                    showStatusScreen(success ? 'success' : 'error');
+                                    resolve();
+                                }, 1500);
+                            });
+                        },
+                        onError: (error) => {
+                            console.error('Erro Payment Brick:', error);
+                            // Não mostrar tela de erro automaticamente aqui
+                            // showStatusScreen('error');
+                        },
                     },
-                    onSubmit: ({ selectedPaymentMethod, formData }) => {
-                        return new Promise((resolve) => {
-                            // Simular processamento (em produção, enviar para backend)
-                            setTimeout(() => {
-                                // 85% de chance de sucesso para demonstração
-                                const success = Math.random() > 0.15;
-                                showStatusScreen(success ? 'success' : 'error');
-                                resolve();
-                            }, 1500);
-                        });
-                    },
-                    onError: (error) => {
-                        console.error('Erro Payment Brick:', error);
-                        showStatusScreen('error');
-                    },
-                },
-            };
+                };
 
-            window.paymentBrickController = await bricksBuilder.create(
-                "payment",
-                "paymentBrick_container",
-                settings
-            );
+                window.paymentBrickController = await bricksBuilder.create(
+                    "payment",
+                    "paymentBrick_container",
+                    settings
+                );
+                
+                console.log('Payment Brick criado com sucesso');
+                
+            } catch (error) {
+                console.error('Erro ao criar Payment Brick:', error);
+                // Mostrar erro no console mas não redirecionar automaticamente
+                document.getElementById('paymentBrick_container').innerHTML = `
+                    <div class="loading-state">
+                        <p style="color: #ff4d4f;">Erro ao carregar o sistema de pagamento</p>
+                        <p style="font-size: 14px; color: #666;">Verifique sua conexão e recarregue a página</p>
+                    </div>
+                `;
+            }
         };
 
         // Executar quando página carregar
-        renderPaymentBrick(bricksBuilder);
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Inicializando Payment Brick...');
+            renderPaymentBrick(bricksBuilder);
+        });
     </script>
 </body>
 </html>
