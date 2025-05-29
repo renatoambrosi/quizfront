@@ -392,8 +392,15 @@
                 margin: 12px auto;
                 padding: 14px;
                 font-size: 15px;
-                width: 90%;
-                max-width: 280px;
+                display: block;
+                text-align: center;
+            }
+            
+            .payment-container {
+                text-align: center;
+            }
+            
+            .status-content {
                 text-align: center;
             }
         }
@@ -688,14 +695,14 @@
                             },
                         },
                         paymentMethods: {
-                            creditCard: ["visa", "master"], // Apenas Visa e Master, sem ELO
+                            creditCard: "all",
                             bankTransfer: ["pix"],
-                            maxInstallments: 1,
                             excludedPaymentMethods: [
                                 { id: "elo" },
                                 { id: "hipercard" },
-                                { id: "debelo" }
-                            ]
+                                { id: "cabal" }
+                            ],
+                            maxInstallments: 1
                         },
                     },
                     callbacks: {
@@ -711,6 +718,13 @@
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
                             console.log('💳 Dados do pagamento:', formData);
                             console.log('💳 Método selecionado:', selectedPaymentMethod);
+                            
+                            // Verificar se é cartão ELO e bloquear
+                            if (formData.payment_method_id === 'elo') {
+                                console.log('🚫 Cartão ELO não é suportado');
+                                showStatusScreen('error');
+                                return Promise.reject('Cartão ELO não suportado');
+                            }
                             
                             // Mostrar status de processamento
                             showStatusScreen('processing');
@@ -837,13 +851,14 @@
                     },
                     customization: {
                         paymentMethods: {
-                            creditCard: ["visa", "master"], // Apenas cartões seguros
+                            creditCard: "all",
                             bankTransfer: ["pix"],
-                            maxInstallments: 1,
                             excludedPaymentMethods: [
                                 { id: "elo" },
-                                { id: "hipercard" }
-                            ]
+                                { id: "hipercard" },
+                                { id: "cabal" }
+                            ],
+                            maxInstallments: 1
                         },
                     },
                     callbacks: {
@@ -858,6 +873,13 @@
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
                             console.log('💳 Dados do pagamento (simples):', formData);
+                            
+                            // Verificar se é cartão ELO e bloquear
+                            if (formData.payment_method_id === 'elo') {
+                                console.log('🚫 Cartão ELO não é suportado');
+                                showStatusScreen('error');
+                                return Promise.reject('Cartão ELO não suportado');
+                            }
                             
                             showStatusScreen('processing');
                             
