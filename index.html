@@ -249,9 +249,23 @@
 
         .action-button {
             width: 100%;
+            max-width: 300px;
             padding: 16px;
             background: #1890ff;
             color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin: 16px auto;
+            display: block;
+        }
+
+        .action-button:hover {
+            background: #40a9ff;
+        }
             border: none;
             border-radius: 8px;
             font-size: 16px;
@@ -378,6 +392,9 @@
                 margin: 12px auto;
                 padding: 14px;
                 font-size: 15px;
+                width: 90%;
+                max-width: 280px;
+                text-align: center;
             }
         }
 
@@ -671,9 +688,14 @@
                             },
                         },
                         paymentMethods: {
-                            creditCard: ["visa", "master", "amex"], // Apenas cartões específicos, sem ELO
-                            bankTransfer: "all",
-                            maxInstallments: 1
+                            creditCard: ["visa", "master"], // Apenas Visa e Master, sem ELO
+                            bankTransfer: ["pix"],
+                            maxInstallments: 1,
+                            excludedPaymentMethods: [
+                                { id: "elo" },
+                                { id: "hipercard" },
+                                { id: "debelo" }
+                            ]
                         },
                     },
                     callbacks: {
@@ -815,9 +837,13 @@
                     },
                     customization: {
                         paymentMethods: {
-                            creditCard: ["visa", "master", "amex"], // Cartões específicos
-                            bankTransfer: "all",
-                            maxInstallments: 1
+                            creditCard: ["visa", "master"], // Apenas cartões seguros
+                            bankTransfer: ["pix"],
+                            maxInstallments: 1,
+                            excludedPaymentMethods: [
+                                { id: "elo" },
+                                { id: "hipercard" }
+                            ]
                         },
                     },
                     callbacks: {
