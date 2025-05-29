@@ -14,53 +14,21 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background-color: #f5f5f5;
-            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
         }
         
-        /* Navegação entre telas */
-        .navigation {
-            max-width: 800px;
-            margin: 0 auto 40px;
-            text-align: center;
-        }
-        
-        .nav-button {
-            background: #333;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s;
-        }
-        
-        .nav-button:hover {
-            background: #555;
-        }
-        
-        .nav-button.active {
-            background: #2196F3;
-        }
-        
-        /* Container das telas */
-        .screens-container {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        
-        .screen {
-            display: none;
+        /* Container principal - mostra apenas uma tela por vez */
+        .container {
             background: white;
             border-radius: 16px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
             overflow: hidden;
-            margin-bottom: 40px;
-        }
-        
-        .screen.active {
-            display: block;
         }
         
         /* Headers com cores diferentes */
@@ -197,6 +165,8 @@
         
         .btn-primary:hover {
             background: #1976D2;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
         }
         
         .btn-secondary {
@@ -215,6 +185,8 @@
         
         .btn-success:hover {
             background: #45a049;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
         }
         
         .btn-danger {
@@ -224,6 +196,8 @@
         
         .btn-danger:hover {
             background: #da190b;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
         }
         
         /* Links */
@@ -264,53 +238,83 @@
             border: 1px solid #ffe0b2;
             color: #e65100;
         }
+        
+        /* Progress bar */
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 30px 0;
+        }
+        
+        .progress-fill {
+            background: #2196F3;
+            height: 100%;
+            width: 60%;
+            transition: width 0.3s;
+            animation: progress 2s ease-in-out infinite;
+        }
+        
+        @keyframes progress {
+            0% { width: 30%; }
+            50% { width: 70%; }
+            100% { width: 30%; }
+        }
     </style>
 </head>
 <body>
-    <!-- Navegação -->
-    <div class="navigation">
-        <h2 style="margin-bottom: 20px;">Telas de Status de Pagamento</h2>
-        <button class="nav-button active" onclick="showScreen('success')">Sucesso</button>
-        <button class="nav-button" onclick="showScreen('error')">Erro</button>
-        <button class="nav-button" onclick="showScreen('processing')">Processando</button>
-        <button class="nav-button" onclick="showScreen('warning')">Aviso</button>
-    </div>
-    
-    <div class="screens-container">
-        <!-- Tela de Sucesso -->
-        <div class="screen active" id="success-screen">
-            <div class="header header-success">
-                <div class="icon-container">
-                    <svg class="success-icon" viewBox="0 0 24 24">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                </div>
-            </div>
-            <div class="content">
-                <h1>Pagamento Aprovado!</h1>
-                <p class="subtitle">
-                    Seu pagamento foi processado com sucesso. Você já pode acessar o conteúdo.
-                </p>
-                
-                <div class="details-box">
-                    <div class="detail-row">
-                        <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                        </svg>
-                        <div>
-                            <div style="font-weight: 500;">R$ 10,00</div>
-                            <div style="color: #666; font-size: 14px;">Teste de Prosperidade</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <button class="btn btn-success">Acessar Conteúdo</button>
-                <a href="#" class="link">Voltar ao início</a>
+    <!-- 
+        INSTRUÇÕES DE USO:
+        
+        Para usar uma tela específica, copie apenas o HTML da tela desejada
+        (incluindo o container) e mantenha todos os estilos CSS acima.
+        
+        Exemplos de implementação:
+        
+        1. TELA DE SUCESSO: Use após pagamento aprovado
+        2. TELA DE ERRO: Use quando o pagamento for recusado
+        3. TELA DE PROCESSANDO: Use enquanto aguarda resposta do gateway
+        4. TELA DE AVISO: Use para pagamentos pendentes ou que precisam de ação
+    -->
+
+    <!-- TELA DE SUCESSO - Copie daqui se precisar apenas desta tela -->
+    <div class="container">
+        <div class="header header-success">
+            <div class="icon-container">
+                <svg class="success-icon" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
             </div>
         </div>
+        <div class="content">
+            <h1>Pagamento Aprovado!</h1>
+            <p class="subtitle">
+                Seu pagamento foi processado com sucesso. Você já pode acessar o conteúdo.
+            </p>
+            
+            <div class="details-box">
+                <div class="detail-row">
+                    <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    <div>
+                        <div style="font-weight: 500;">R$ 10,00</div>
+                        <div style="color: #666; font-size: 14px;">Teste de Prosperidade</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-success">Acessar Conteúdo</button>
+            <a href="#" class="link">Voltar ao início</a>
+        </div>
+    </div>
+    
+    <!-- 
+        OUTRAS TELAS DISPONÍVEIS (descomente a que precisar):
         
-        <!-- Tela de Erro -->
-        <div class="screen" id="error-screen">
+        === TELA DE ERRO ===
+        <div class="container">
             <div class="header header-error">
                 <div class="icon-container">
                     <svg class="error-icon" viewBox="0 0 24 24">
@@ -335,8 +339,8 @@
             </div>
         </div>
         
-        <!-- Tela de Processando -->
-        <div class="screen" id="processing-screen">
+        === TELA DE PROCESSANDO ===
+        <div class="container">
             <div class="header header-processing">
                 <div class="icon-container">
                     <svg class="processing-icon loading-spinner" viewBox="0 0 24 24">
@@ -355,18 +359,16 @@
                     Por favor, não feche esta janela
                 </div>
                 
-                <div style="margin: 30px 0;">
-                    <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
-                        <div style="background: #2196F3; height: 100%; width: 60%; transition: width 0.3s;"></div>
-                    </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
                 </div>
                 
                 <p style="color: #666; font-size: 14px;">Verificando dados do cartão...</p>
             </div>
         </div>
         
-        <!-- Tela de Aviso -->
-        <div class="screen" id="warning-screen">
+        === TELA DE AVISO ===
+        <div class="container">
             <div class="header header-warning">
                 <div class="icon-container">
                     <svg class="warning-icon" viewBox="0 0 24 24">
@@ -397,18 +399,6 @@
                 <a href="#" class="link">Voltar ao início</a>
             </div>
         </div>
-    </div>
-    
-    <script>
-        function showScreen(screenType) {
-            // Remove active de todos os botões e telas
-            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-            
-            // Ativa o botão e tela selecionados
-            event.target.classList.add('active');
-            document.getElementById(screenType + '-screen').classList.add('active');
-        }
-    </script>
+    -->
 </body>
 </html>
