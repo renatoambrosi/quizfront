@@ -258,7 +258,8 @@
             font-weight: 500;
             cursor: pointer;
             transition: background 0.3s ease;
-            margin-bottom: 16px;
+            margin: 16px auto;
+            display: block;
         }
 
         .action-button:hover {
@@ -645,6 +646,12 @@
                     callbacks: {
                         onReady: () => {
                             console.log('✅ Payment Brick carregado com sucesso');
+                            
+                            // REMOVER O LOADING quando o brick estiver pronto
+                            const loadingElement = document.querySelector('.loading-state');
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
                             console.log('💳 Dados do pagamento:', formData);
@@ -736,6 +743,14 @@
                 
                 console.log('✅ Payment Brick criado com sucesso');
                 
+                // GARANTIR que o loading seja removido após criação
+                setTimeout(() => {
+                    const loadingElement = document.querySelector('.loading-state');
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                }, 2000);
+                
             } catch (error) {
                 console.error('❌ Erro ao criar Payment Brick:', error);
                 console.log('🔄 Tentando configuração simples...');
@@ -770,6 +785,12 @@
                     callbacks: {
                         onReady: () => {
                             console.log('✅ Payment Brick simples carregado');
+                            
+                            // REMOVER O LOADING no brick simples também
+                            const loadingElement = document.querySelector('.loading-state');
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
                             console.log('💳 Dados do pagamento (simples):', formData);
@@ -828,6 +849,14 @@
                 );
                 
                 console.log('✅ Payment Brick simples criado');
+                
+                // GARANTIR que o loading seja removido no brick simples
+                setTimeout(() => {
+                    const loadingElement = document.querySelector('.loading-state');
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                }, 2000);
                 
             } catch (error) {
                 console.error('❌ Erro crítico no Payment Brick:', error);
