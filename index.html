@@ -1,429 +1,80 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finalizar Pagamento - Quiz Personalizado</title>
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 16px;
-            opacity: 0.9;
-        }
-
-        .content {
-            padding: 40px 30px;
-        }
-
-        .info-section {
-            background: linear-gradient(135deg, #f8f9ff 0%, #e8f4fd 100%);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 30px;
-            border-left: 4px solid #667eea;
-        }
-
-        .info-section h3 {
-            color: #333;
-            font-size: 18px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-        }
-
-        .info-section h3::before {
-            content: "💰";
-            margin-right: 10px;
-            font-size: 20px;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .info-label {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .info-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px 20px;
-            color: #666;
-        }
-
-        .loading::before {
-            content: "⏳";
-            display: block;
-            font-size: 32px;
-            margin-bottom: 15px;
-        }
-
-        #paymentBrick_container {
-            margin-top: 30px;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .error-message {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        .error-message::before {
-            content: "⚠️";
-            display: block;
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        .success-message {
-            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        .payment-methods {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        .payment-method {
-            background: #f8f9fa;
-            padding: 12px 20px;
-            border-radius: 25px;
-            font-size: 14px;
-            color: #666;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .uid-display {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-family: monospace;
-            font-size: 14px;
-            color: #495057;
-            text-align: center;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                border-radius: 12px;
-            }
-
-            .header {
-                padding: 30px 20px;
-            }
-
-            .header h1 {
-                font-size: 24px;
-            }
-
-            .content {
-                padding: 30px 20px;
-            }
-
-            .info-grid {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-        }
-    </style>
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Quiz Personalizado</h1>
-            <p>Finalize seu pagamento para receber o resultado</p>
-        </div>
-        
-        <div class="content">
-            <div id="uid-section" class="uid-display" style="display: none;">
-                <strong>ID da Sessão:</strong> <span id="uid-value"></span>
-            </div>
-
-            <div class="info-section">
-                <h3>Detalhes do Pagamento</h3>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-label">Valor Total</span>
-                        <span class="info-value">R$ 10,00</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Produto</span>
-                        <span class="info-value">Quiz Personalizado</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="payment-methods">
-                <div class="payment-method">
-                    💳 Cartão de Crédito
-                </div>
-                <div class="payment-method">
-                    💰 PIX
-                </div>
-                <div class="payment-method">
-                    📄 Boleto
-                </div>
-            </div>
-
-            <div id="loading" class="loading">
-                Carregando formulário de pagamento...
-            </div>
-
-            <div id="error-container"></div>
-            <div id="success-container"></div>
-
-            <!-- Container onde o Payment Brick será renderizado -->
-            <div id="paymentBrick_container"></div>
-        </div>
-    </div>
-
-    <script>
-        console.log('🚀 QuizFront iniciado!');
-        console.log('Timestamp:', new Date().toISOString());
-
-        // Função para obter parâmetros da URL
-        function getURLParameter(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        // Obter o UID da URL
-        const uid = getURLParameter('uid');
-        console.log('UID recebido:', uid);
-
-        // Mostrar UID na tela se existir
-        if (uid) {
-            document.getElementById('uid-section').style.display = 'block';
-            document.getElementById('uid-value').textContent = uid;
-        }
-
-        // Configurar Mercado Pago
-        const mp = new MercadoPago('TEST-d1dd4fcc-3ec9-4935-88e2-8784c22f4626', {
-            locale: 'pt'
-        });
-
-        const bricksBuilder = mp.bricks();
-
-        // Função para mostrar mensagens
-        function showError(message) {
-            const errorContainer = document.getElementById('error-container');
-            errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
-            document.getElementById('loading').style.display = 'none';
-        }
-
-        function showSuccess(message) {
-            const successContainer = document.getElementById('success-container');
-            successContainer.innerHTML = `<div class="success-message">${message}</div>`;
-        }
-
-        // Função para renderizar o Payment Brick
-        const renderPaymentBrick = async (bricksBuilder) => {
-            try {
-                console.log('Inicializando Payment Brick...');
-
-                const settings = {
-                    initialization: {
-                        amount: 10, // R$ 10,00
-                        payer: {
-                            firstName: "",
-                            lastName: "",
-                            email: "",
-                        },
-                    },
-                    customization: {
-                        visual: {
-                            style: {
-                                theme: "default",
-                            },
-                        },
-                        paymentMethods: {
-                            creditCard: "all",        // Cartões de crédito
-                            debitCard: "all",         // Cartões de débito  
-                            bankTransfer: "all",      // PIX
-                            ticket: "all",           // Boleto
-                            maxInstallments: 12       // Máximo 12 parcelas
-                        },
-                    },
-                    callbacks: {
-                        onReady: () => {
-                            console.log('✅ Payment Brick carregado com sucesso');
-                            document.getElementById('loading').style.display = 'none';
-                        },
-                        onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('🔄 Processando pagamento...');
-                            console.log('Método selecionado:', selectedPaymentMethod);
-                            console.log('Dados do formulário:', formData);
-                            
-                            // Adicionar UID aos dados
-                            if (uid) {
-                                formData.uid = uid;
-                                formData.external_reference = uid;
-                            }
-                            
-                            return new Promise((resolve, reject) => {
-                                // Mostrar loading
-                                showSuccess('Processando pagamento, aguarde...');
-                                
-                                // Enviar para o backend
-                                fetch("https://quizback-production-98f5.up.railway.app/process_payment", {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify(formData),
-                                })
-                                .then((response) => {
-                                    console.log('Status da resposta:', response.status);
-                                    if (!response.ok) {
-                                        throw new Error(`HTTP ${response.status}`);
-                                    }
-                                    return response.json();
-                                })
-                                .then((response) => {
-                                    console.log('✅ Resposta do pagamento:', response);
-                                    
-                                    if (response.status === 'approved') {
-                                        // Pagamento aprovado imediatamente (cartão)
-                                        showSuccess('Pagamento aprovado! Redirecionando...');
-                                        setTimeout(() => {
-                                            window.location.href = `https://www.suellenseragi.com.br/resultado?uid=${uid || 'guest'}&payment_id=${response.id}`;
-                                        }, 2000);
-                                    } else if (response.status === 'pending') {
-                                        // Pagamento pendente (PIX, Boleto)
-                                        showSuccess('Pagamento criado! Redirecionando para finalização...');
-                                        setTimeout(() => {
-                                            window.location.href = `status.html?payment_id=${response.id}&uid=${uid || 'guest'}`;
-                                        }, 1500);
-                                    } else if (response.status === 'in_process') {
-                                        // Pagamento em processamento
-                                        showSuccess('Pagamento em processamento...');
-                                        setTimeout(() => {
-                                            window.location.href = `status.html?payment_id=${response.id}&uid=${uid || 'guest'}`;
-                                        }, 1500);
-                                    } else {
-                                        throw new Error(`Status inesperado: ${response.status} - ${response.status_detail}`);
-                                    }
-                                    
-                                    resolve();
-                                })
-                                .catch((error) => {
-                                    console.error('❌ Erro ao processar pagamento:', error);
-                                    showError(`Erro ao processar pagamento: ${error.message}<br><small>Tente novamente ou entre em contato com o suporte.</small>`);
-                                    reject(error);
-                                });
-                            });
-                        },
-                        onError: (error) => {
-                            console.error('❌ Erro no Payment Brick:', error);
-                            showError(`Erro no formulário: ${error.message || 'Erro desconhecido'}`);
-                        },
-                    },
-                };
-
-                // Criar o Payment Brick
-                window.paymentBrickController = await bricksBuilder.create(
-                    "payment",
-                    "paymentBrick_container",
-                    settings
-                );
-
-                console.log('✅ Payment Brick criado com sucesso');
-
-            } catch (error) {
-                console.error('❌ Erro ao inicializar Payment Brick:', error);
-                showError('Erro ao carregar o formulário de pagamento. Recarregue a página.');
-            }
-        };
-
-        // Verificar se a página foi carregada corretamente
-        if (!uid) {
-            console.warn('⚠️ UID não encontrado na URL');
-            showError('Link inválido. Certifique-se de acessar através do quiz.<br><small>Se o problema persistir, entre em contato com o suporte.</small>');
-        } else {
-            // Inicializar o Payment Brick
-            renderPaymentBrick(bricksBuilder);
-        }
-
-        // Cleanup quando sair da página
-        window.addEventListener('beforeunload', function() {
-            if (window.paymentBrickController) {
-                console.log('🧹 Limpando Payment Brick...');
-                window.paymentBrickController.unmount();
-            }
-        });
-
-        // Log de debug
-        console.log('Configuração atual:');
-        console.log('- UID:', uid);
-        console.log('- Backend:', 'https://quizback-production-98f5.up.railway.app');
-        console.log('- Frontend:', 'https://quizfront.vercel.app');
-    </script>
+  <div id="paymentBrick_container"></div>
+  
+  <script>
+    // EXATAMENTE como na documentação Frontend.txt
+    const mp = new MercadoPago('TEST-d1dd4fcc-3ec9-4935-88e2-8784c22f4626', {
+      locale: 'pt'
+    });
+    
+    const bricksBuilder = mp.bricks();
+    
+    const renderPaymentBrick = async (bricksBuilder) => {
+      const settings = {
+        initialization: {
+          amount: 10,
+          payer: {
+            firstName: "",
+            lastName: "",
+            email: "",
+          },
+        },
+        customization: {
+          visual: {
+            style: {
+              theme: "default",
+            },
+          },
+          paymentMethods: {
+            creditCard: "all",
+            bankTransfer: "all",
+            atm: "all",
+            maxInstallments: 1
+          },
+        },
+        callbacks: {
+          onReady: () => {
+            console.log('Brick carregado');
+          },
+          onSubmit: ({ selectedPaymentMethod, formData }) => {
+            return new Promise((resolve, reject) => {
+              fetch("https://quizback-production-98f5.up.railway.app/process_payment", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+              })
+                .then((response) => response.json())
+                .then((response) => {
+                  console.log('Resposta:', response);
+                  resolve();
+                })
+                .catch((error) => {
+                  console.error('Erro:', error);
+                  reject();
+                });
+            });
+          },
+          onError: (error) => {
+            console.error(error);
+          },
+        },
+      };
+      
+      window.paymentBrickController = await bricksBuilder.create(
+        "payment",
+        "paymentBrick_container",
+        settings
+      );
+    };
+    
+    renderPaymentBrick(bricksBuilder);
+  </script>
 </body>
 </html>
