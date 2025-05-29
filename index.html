@@ -325,6 +325,26 @@
             background: #389e0d;
         }
 
+        .status-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -40px;
+            z-index: 10;
+        }
+
         @media (max-width: 600px) {
             .checkout-container {
                 margin: 0 16px;
@@ -345,6 +365,19 @@
             
             .status-title {
                 font-size: 24px;
+            }
+            
+            .status-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 32px;
+                bottom: -35px;
+            }
+            
+            .action-button {
+                margin: 12px auto;
+                padding: 14px;
+                font-size: 15px;
             }
         }
 
@@ -638,9 +671,9 @@
                             },
                         },
                         paymentMethods: {
-                            creditCard: "all",
+                            creditCard: ["visa", "master", "amex"], // Apenas cartões específicos, sem ELO
                             bankTransfer: "all",
-                            maxInstallments: 1 // Apenas 1x para R$ 10
+                            maxInstallments: 1
                         },
                     },
                     callbacks: {
@@ -716,6 +749,11 @@
                             console.error('❌ Erro Payment Brick:', error);
                             console.log('🔍 Detalhes do erro:', JSON.stringify(error, null, 2));
                             
+                            // Verificar se é erro relacionado ao ELO ou cartão não suportado
+                            if (error.message && error.message.includes('card')) {
+                                console.log('⚠️ Erro relacionado a cartão não suportado');
+                            }
+                            
                             // Limpar brick antes de tentar recriar
                             if (window.paymentBrickController) {
                                 try {
@@ -777,7 +815,7 @@
                     },
                     customization: {
                         paymentMethods: {
-                            creditCard: "all",
+                            creditCard: ["visa", "master", "amex"], // Cartões específicos
                             bankTransfer: "all",
                             maxInstallments: 1
                         },
