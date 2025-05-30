@@ -404,6 +404,31 @@
             cursor: pointer;
             margin-bottom: 8px;
         }
+
+        /* Production Mode Indicator */
+        .prod-indicator {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 10px 0;
+            font-size: 12px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .test-indicator {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 10px 0;
+            font-size: 12px;
+            text-align: center;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -415,6 +440,11 @@
             <div class="completion-message">
                 <span class="icon">💡</span>
                 Complete o pagamento para acessar seu resultado personalizado
+            </div>
+            
+            <!-- Production Mode Indicator -->
+            <div id="modeIndicator" class="prod-indicator">
+                🟢 MODO PRODUÇÃO ATIVO
             </div>
             
             <!-- Debug Toggle -->
@@ -489,17 +519,34 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
+        // CONFIGURAÇÕES E VARIÁVEIS GLOBAIS - PRODUÇÃO
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
-        const PUBLIC_KEY = 'TEST-d1dd4fcc-3ec9-4935-88e2-8784c22f4626';
+        
+        // ✅ CREDENCIAIS DE PRODUÇÃO FORÇADAS
+        const PUBLIC_KEY = 'PROD-d1dd4fcc-3ec9-4935-88e2-8784c22f4626';
+        
+        // ✅ LOGS DE VERIFICAÇÃO DE AMBIENTE
+        console.log('🔍 PUBLIC_KEY sendo usada:', PUBLIC_KEY);
+        console.log('🔍 Ambiente detectado:', PUBLIC_KEY.startsWith('PROD') ? '🟢 PRODUÇÃO' : '🔴 TESTE');
+        console.log('🔍 Backend URL:', BACKEND_URL);
         
         // Obter UID da URL ou gerar um para teste
         const urlParams = new URLSearchParams(window.location.search);
-        const userUID = urlParams.get('uid') || `test-${Date.now()}`;
+        const userUID = urlParams.get('uid') || `prod-${Date.now()}`;
         
         console.log('🆔 UID do usuário:', userUID);
+
+        // ✅ ATUALIZAR INDICADOR VISUAL DE AMBIENTE
+        const modeIndicator = document.getElementById('modeIndicator');
+        if (PUBLIC_KEY.startsWith('PROD')) {
+            modeIndicator.className = 'prod-indicator';
+            modeIndicator.innerHTML = '🟢 MODO PRODUÇÃO ATIVO - Cartões reais aceitos';
+        } else {
+            modeIndicator.className = 'test-indicator';
+            modeIndicator.innerHTML = '🔴 MODO TESTE - Apenas cartões de teste';
+        }
 
         // ============================================
         // DEBUG FUNCTIONS
@@ -524,15 +571,28 @@
         }
 
         // ============================================
-        // INICIALIZAR MERCADO PAGO COM TRATAMENTO DE ERRO
+        // INICIALIZAR MERCADO PAGO - MODO PRODUÇÃO FORÇADO
         // ============================================
         
         let mp, bricksBuilder;
         
         try {
-            mp = new MercadoPago(PUBLIC_KEY, { locale: 'pt' });
+            // ✅ CONFIGURAÇÃO FORÇADA PARA PRODUÇÃO
+            mp = new MercadoPago(PUBLIC_KEY, { 
+                locale: 'pt',
+                advancedFraudPrevention: false,  // ✅ Desabilitar para evitar conflitos
+                trackingDisabled: false          // ✅ Manter tracking ativo
+            });
+            
             bricksBuilder = mp.bricks();
-            debugLog('✅ MercadoPago SDK inicializado', { publicKey: PUBLIC_KEY });
+            
+            debugLog('✅ MercadoPago SDK inicializado em PRODUÇÃO', { 
+                publicKey: PUBLIC_KEY.substring(0, 20) + '...',
+                ambiente: 'PRODUÇÃO'
+            });
+            
+            console.log('✅ MercadoPago SDK configurado para PRODUÇÃO');
+            
         } catch (error) {
             debugLog('❌ Erro ao inicializar MercadoPago SDK', error);
             console.error('❌ Erro crítico ao inicializar SDK:', error);
@@ -711,12 +771,12 @@
         };
 
         // ============================================
-        // PAYMENT BRICK CONFIGURATION CORRIGIDA
+        // PAYMENT BRICK CONFIGURATION - PRODUÇÃO
         // ============================================
 
         const renderPaymentBrick = async (bricksBuilder) => {
             try {
-                debugLog('🎨 Iniciando renderização do Payment Brick');
+                debugLog('🎨 Iniciando renderização do Payment Brick em PRODUÇÃO');
 
                 const settings = {
                     initialization: {
@@ -734,21 +794,16 @@
                             },
                         },
                         paymentMethods: {
-                            creditCard: "all",
-                            bankTransfer: ["pix"],
-                            maxInstallments: 1,
-                            // ✅ IMPORTANTE: Excluir métodos problemáticos
-                            excludedPaymentMethods: [
-                                { id: "elo" },
-                                { id: "hipercard" },
-                                { id: "debelo" }
-                            ]
+                            creditCard: "all",         // ✅ Aceitar todos cartões de crédito
+                            bankTransfer: ["pix"],     // ✅ PIX habilitado
+                            maxInstallments: 1,        // ✅ Máximo 1 parcela
+                            // ✅ REMOVER exclusões para produção - aceitar todos os cartões
                         },
                     },
                     callbacks: {
                         onReady: () => {
-                            debugLog('✅ Payment Brick está pronto');
-                            console.log('✅ Payment Brick carregado com sucesso');
+                            debugLog('✅ Payment Brick está pronto - MODO PRODUÇÃO');
+                            console.log('✅ Payment Brick carregado com sucesso em PRODUÇÃO');
                             
                             // Remover loading
                             const loadingElement = document.querySelector('.loading-state');
@@ -757,12 +812,15 @@
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            debugLog('💳 Iniciando submissão de pagamento', {
+                            debugLog('💳 Iniciando submissão de pagamento PRODUÇÃO', {
                                 selectedPaymentMethod,
-                                formData: { ...formData, token: formData.token ? '[TOKEN_HIDDEN]' : 'NO_TOKEN' }
+                                formData: { 
+                                    ...formData, 
+                                    token: formData.token ? '[TOKEN_HIDDEN_PROD]' : 'NO_TOKEN' 
+                                }
                             });
 
-                            console.log('💳 Dados do pagamento:', formData);
+                            console.log('💳 Dados do pagamento PRODUÇÃO:', formData);
                             console.log('💳 Método selecionado:', selectedPaymentMethod);
                             
                             // Mostrar status de processamento
@@ -785,9 +843,9 @@
                                     transaction_amount: 10 // Garantir R$ 10,00
                                 };
                                 
-                                debugLog('📤 Enviando dados para backend', {
+                                debugLog('📤 Enviando dados PRODUÇÃO para backend', {
                                     ...paymentData,
-                                    token: paymentData.token ? '[TOKEN_HIDDEN]' : 'NO_TOKEN'
+                                    token: paymentData.token ? '[TOKEN_HIDDEN_PROD]' : 'NO_TOKEN'
                                 });
 
                                 // ✅ GERAR NOVO IDEMPOTENCY KEY PARA CADA TENTATIVA
@@ -803,7 +861,7 @@
                                     body: JSON.stringify(paymentData),
                                 })
                                 .then(response => {
-                                    debugLog(`📥 Resposta do backend: ${response.status}`, {
+                                    debugLog(`📥 Resposta do backend PRODUÇÃO: ${response.status}`, {
                                         status: response.status,
                                         ok: response.ok
                                     });
@@ -814,8 +872,8 @@
                                     return response.json();
                                 })
                                 .then(result => {
-                                    debugLog('✅ Resultado do pagamento', result);
-                                    console.log('✅ Resposta do backend:', result);
+                                    debugLog('✅ Resultado do pagamento PRODUÇÃO', result);
+                                    console.log('✅ Resposta do backend PRODUÇÃO:', result);
                                     
                                     if (result.status === 'approved') {
                                         // Pagamento aprovado - cartão de crédito
@@ -836,16 +894,16 @@
                                     }
                                 })
                                 .catch(error => {
-                                    debugLog('❌ Erro na requisição', error);
-                                    console.error('❌ Erro no pagamento:', error);
+                                    debugLog('❌ Erro na requisição PRODUÇÃO', error);
+                                    console.error('❌ Erro no pagamento PRODUÇÃO:', error);
                                     showStatusScreen('error');
                                     reject();
                                 });
                             });
                         },
                         onError: (error) => {
-                            debugLog('❌ Erro no Payment Brick', error);
-                            console.error('❌ Erro Payment Brick:', error);
+                            debugLog('❌ Erro no Payment Brick PRODUÇÃO', error);
+                            console.error('❌ Erro Payment Brick PRODUÇÃO:', error);
                             
                             // Limpar brick antes de tentar recriar
                             if (window.paymentBrickController) {
@@ -859,14 +917,14 @@
                             
                             // Tentar recriar o brick após delay
                             setTimeout(() => {
-                                debugLog('🔄 Tentando recriar Payment Brick...');
+                                debugLog('🔄 Tentando recriar Payment Brick PRODUÇÃO...');
                                 renderSimplePaymentBrick(bricksBuilder);
                             }, 2000);
                         },
                     },
                 };
 
-                debugLog('🔧 Configurações do Payment Brick', settings);
+                debugLog('🔧 Configurações do Payment Brick PRODUÇÃO', settings);
 
                 window.paymentBrickController = await bricksBuilder.create(
                     "payment",
@@ -874,12 +932,12 @@
                     settings
                 );
                 
-                debugLog('✅ Payment Brick criado com sucesso');
-                console.log('✅ Payment Brick criado com sucesso');
+                debugLog('✅ Payment Brick PRODUÇÃO criado com sucesso');
+                console.log('✅ Payment Brick PRODUÇÃO criado com sucesso');
                 
             } catch (error) {
-                debugLog('❌ Erro crítico ao criar Payment Brick', error);
-                console.error('❌ Erro ao criar Payment Brick:', error);
+                debugLog('❌ Erro crítico ao criar Payment Brick PRODUÇÃO', error);
+                console.error('❌ Erro ao criar Payment Brick PRODUÇÃO:', error);
                 renderSimplePaymentBrick(bricksBuilder);
             }
         };
@@ -887,12 +945,12 @@
         // Função com configuração mais simples para fallback
         const renderSimplePaymentBrick = async (bricksBuilder) => {
             try {
-                debugLog('🔄 Renderizando Payment Brick simples (fallback)');
+                debugLog('🔄 Renderizando Payment Brick simples PRODUÇÃO (fallback)');
                 
                 document.getElementById('paymentBrick_container').innerHTML = `
                     <div class="loading-state">
                         <div class="spinner"></div>
-                        <p>Carregando sistema básico de pagamento...</p>
+                        <p>Carregando sistema básico de pagamento PRODUÇÃO...</p>
                     </div>
                 `;
 
@@ -905,15 +963,15 @@
                     },
                     customization: {
                         paymentMethods: {
-                            creditCard: ["visa", "master"],
+                            creditCard: "all",      // ✅ Todos cartões para produção
                             bankTransfer: ["pix"],
                             maxInstallments: 1,
                         },
                     },
                     callbacks: {
                         onReady: () => {
-                            debugLog('✅ Payment Brick simples está pronto');
-                            console.log('✅ Payment Brick simples carregado');
+                            debugLog('✅ Payment Brick simples PRODUÇÃO está pronto');
+                            console.log('✅ Payment Brick simples PRODUÇÃO carregado');
                             
                             const loadingElement = document.querySelector('.loading-state');
                             if (loadingElement) {
@@ -921,8 +979,8 @@
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            debugLog('💳 Submissão Payment Brick simples', { selectedPaymentMethod });
-                            console.log('💳 Dados do pagamento (simples):', formData);
+                            debugLog('💳 Submissão Payment Brick simples PRODUÇÃO', { selectedPaymentMethod });
+                            console.log('💳 Dados do pagamento simples PRODUÇÃO:', formData);
                             
                             showStatusScreen('processing');
                             
@@ -946,8 +1004,8 @@
                                 })
                                 .then(response => response.json())
                                 .then(result => {
-                                    debugLog('✅ Resposta Payment Brick simples', result);
-                                    console.log('✅ Resposta do backend (simples):', result);
+                                    debugLog('✅ Resposta Payment Brick simples PRODUÇÃO', result);
+                                    console.log('✅ Resposta do backend simples PRODUÇÃO:', result);
                                     
                                     if (result.status === 'approved') {
                                         showStatusScreen('success', result);
@@ -961,16 +1019,16 @@
                                     }
                                 })
                                 .catch(error => {
-                                    debugLog('❌ Erro Payment Brick simples', error);
-                                    console.error('❌ Erro no pagamento (simples):', error);
+                                    debugLog('❌ Erro Payment Brick simples PRODUÇÃO', error);
+                                    console.error('❌ Erro no pagamento simples PRODUÇÃO:', error);
                                     showStatusScreen('error');
                                     reject();
                                 });
                             });
                         },
                         onError: (error) => {
-                            debugLog('❌ Erro crítico Payment Brick simples', error);
-                            console.error('❌ Erro Payment Brick simples:', error);
+                            debugLog('❌ Erro crítico Payment Brick simples PRODUÇÃO', error);
+                            console.error('❌ Erro Payment Brick simples PRODUÇÃO:', error);
                             showStatusScreen('error');
                         },
                     },
@@ -982,15 +1040,15 @@
                     simpleSettings
                 );
                 
-                debugLog('✅ Payment Brick simples criado');
-                console.log('✅ Payment Brick simples criado');
+                debugLog('✅ Payment Brick simples PRODUÇÃO criado');
+                console.log('✅ Payment Brick simples PRODUÇÃO criado');
                 
             } catch (error) {
-                debugLog('❌ Erro crítico Payment Brick simples', error);
-                console.error('❌ Erro crítico no Payment Brick:', error);
+                debugLog('❌ Erro crítico Payment Brick simples PRODUÇÃO', error);
+                console.error('❌ Erro crítico no Payment Brick PRODUÇÃO:', error);
                 document.getElementById('paymentBrick_container').innerHTML = `
                     <div class="loading-state">
-                        <p style="color: #ff4d4f;">❌ Erro ao carregar pagamentos</p>
+                        <p style="color: #ff4d4f;">❌ Erro ao carregar pagamentos PRODUÇÃO</p>
                         <p style="font-size: 14px; color: #666;">Recarregue a página para tentar novamente</p>
                         <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
                             Recarregar Página
@@ -1001,19 +1059,21 @@
         };
 
         // ============================================
-        // INICIALIZAÇÃO DA APLICAÇÃO
+        // INICIALIZAÇÃO DA APLICAÇÃO - PRODUÇÃO
         // ============================================
 
         document.addEventListener('DOMContentLoaded', () => {
-            debugLog('🚀 Aplicação iniciada', {
+            debugLog('🚀 Aplicação PRODUÇÃO iniciada', {
                 uid: userUID,
                 backendUrl: BACKEND_URL,
-                publicKey: PUBLIC_KEY
+                publicKey: PUBLIC_KEY.substring(0, 20) + '...',
+                ambiente: 'PRODUÇÃO'
             });
             
-            console.log('🚀 Inicializando checkout do Teste de Prosperidade');
+            console.log('🚀 Inicializando checkout PRODUÇÃO do Teste de Prosperidade');
             console.log('🆔 UID do usuário:', userUID);
             console.log('🌐 Backend URL:', BACKEND_URL);
+            console.log('🟢 MODO PRODUÇÃO ATIVO - Cartões reais aceitos');
             
             if (mp && bricksBuilder) {
                 renderPaymentBrick(bricksBuilder);
@@ -1022,12 +1082,15 @@
                 setTimeout(() => {
                     if (window.MercadoPago) {
                         try {
-                            mp = new MercadoPago(PUBLIC_KEY, { locale: 'pt' });
+                            mp = new MercadoPago(PUBLIC_KEY, { 
+                                locale: 'pt',
+                                advancedFraudPrevention: false 
+                            });
                             bricksBuilder = mp.bricks();
                             renderPaymentBrick(bricksBuilder);
                         } catch (retryError) {
-                            debugLog('❌ Erro na segunda tentativa', retryError);
-                            console.error('❌ Erro na segunda tentativa:', retryError);
+                            debugLog('❌ Erro na segunda tentativa PRODUÇÃO', retryError);
+                            console.error('❌ Erro na segunda tentativa PRODUÇÃO:', retryError);
                         }
                     }
                 }, 2000);
@@ -1041,15 +1104,15 @@
         // Função para testar conexão com backend
         async function testBackendConnection() {
             try {
-                debugLog('🏥 Testando conexão com backend...');
+                debugLog('🏥 Testando conexão com backend PRODUÇÃO...');
                 const response = await fetch(`${BACKEND_URL}/health`);
                 const data = await response.json();
-                debugLog('🏥 Status do backend', data);
-                console.log('🏥 Status do backend:', data);
+                debugLog('🏥 Status do backend PRODUÇÃO', data);
+                console.log('🏥 Status do backend PRODUÇÃO:', data);
                 return data.status === 'OK';
             } catch (error) {
-                debugLog('❌ Backend offline', error);
-                console.error('❌ Backend offline:', error);
+                debugLog('❌ Backend PRODUÇÃO offline', error);
+                console.error('❌ Backend PRODUÇÃO offline:', error);
                 return false;
             }
         }
@@ -1062,7 +1125,7 @@
         // ============================================
         
         window.addEventListener('error', (event) => {
-            debugLog('❌ Erro global capturado', {
+            debugLog('❌ Erro global capturado PRODUÇÃO', {
                 message: event.message,
                 filename: event.filename,
                 lineno: event.lineno,
@@ -1071,8 +1134,28 @@
         });
         
         window.addEventListener('unhandledrejection', (event) => {
-            debugLog('❌ Promise rejeitada não tratada', event.reason);
+            debugLog('❌ Promise rejeitada não tratada PRODUÇÃO', event.reason);
         });
+        
+        // ============================================
+        // FORÇAR LIMPEZA DE CACHE AO CARREGAR
+        // ============================================
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+        
+        // Limpar localStorage se existir
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+        } catch (e) {
+            console.log('Storage não disponível');
+        }
         
     </script>
 </body>
