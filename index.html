@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -118,10 +119,14 @@
 
         .status-header {
             border-radius: 20px 20px 0 0;
-            padding: 40px 0 20px;
+            padding: 60px 0 20px;
             text-align: center;
             position: relative;
             margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
         }
 
         .status-header.success {
@@ -145,15 +150,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto;
             color: white;
             font-size: 36px;
             font-weight: bold;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: -40px;
-            z-index: 10;
+            position: relative;
+            bottom: auto;
+            margin-top: -20px;
         }
 
         .status-content {
@@ -339,26 +341,6 @@
             background: #389e0d;
         }
 
-        .status-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            border: 3px solid white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: -40px;
-            z-index: 10;
-        }
-
         @media (max-width: 600px) {
             .checkout-container {
                 margin: 0 16px;
@@ -385,7 +367,6 @@
                 width: 70px;
                 height: 70px;
                 font-size: 32px;
-                bottom: -35px;
             }
             
             .action-button {
@@ -492,7 +473,7 @@
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
-        const PUBLIC_KEY = 'PROD-d1dd4fcc-3ec9-4935-88e2-8784c22f4626'; // ✅ ÚNICA ALTERAÇÃO: PROD em vez de TEST
+        const PUBLIC_KEY = 'APP_USR-d6a5ce3d-f58e-4ad8-9ae8-22ff5ff2bb14';
         
         // Obter UID da URL ou gerar um para teste
         const urlParams = new URLSearchParams(window.location.search);
@@ -505,7 +486,7 @@
         const bricksBuilder = mp.bricks();
 
         // ============================================
-        // FUNÇÕES DE STATUS SCREEN (MANTIDAS IGUAIS)
+        // FUNÇÕES DE STATUS SCREEN
         // ============================================
 
         function showStatusScreen(type = 'success', paymentData = {}) {
@@ -596,7 +577,14 @@
                     countdownSection.style.display = 'none';
                     pixSection.style.display = 'none';
                     resultButton.textContent = 'Tentar Novamente';
+                    resultButton.disabled = false;
                     resultButton.onclick = () => goBack();
+                }
+
+                // Configurar botão de resultado para casos de sucesso e PIX
+                if (type === 'success' || type === 'pix') {
+                    resultButton.onclick = () => redirectToResult();
+                    resultButton.disabled = false;
                 }
 
                 // Mostrar tela de status
@@ -638,10 +626,20 @@
             const checkoutSection = document.getElementById('checkoutSection');
             const statusScreen = document.getElementById('statusScreen');
             
+            // Limpar qualquer countdown ativo
+            if (window.countdownInterval) {
+                clearInterval(window.countdownInterval);
+            }
+            
             statusScreen.style.display = 'none';
-            checkoutSection.style.display = 'flex';
+            statusScreen.classList.remove('fade-in');
+            
+            checkoutSection.style.display = 'block';
             checkoutSection.classList.remove('fade-out');
             checkoutSection.classList.add('fade-in');
+            
+            // Resetar estilos do container
+            checkoutSection.style.transition = 'all 0.3s ease';
         }
 
         // Função para copiar código PIX
@@ -661,13 +659,8 @@
             }
         }
 
-        // Event listener para botão de resultado
-        document.getElementById('resultButton').onclick = () => {
-            redirectToResult();
-        };
-
         // ============================================
-        // PAYMENT BRICK CONFIGURATION (SEU CÓDIGO ORIGINAL)
+        // PAYMENT BRICK CONFIGURATION
         // ============================================
 
         const renderPaymentBrick = async (bricksBuilder) => {
@@ -937,7 +930,7 @@
         };
 
         // ============================================
-        // INICIALIZAÇÃO DA APLICAÇÃO (SEU CÓDIGO ORIGINAL)
+        // INICIALIZAÇÃO DA APLICAÇÃO
         // ============================================
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -949,7 +942,7 @@
         });
 
         // ============================================
-        // FUNÇÕES UTILITÁRIAS (MANTIDAS IGUAIS)
+        // FUNÇÕES UTILITÁRIAS
         // ============================================
 
         // Função para testar conexão com backend
