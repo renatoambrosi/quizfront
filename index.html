@@ -143,7 +143,7 @@
             background: rgba(255, 255, 255, 0.2);
             border: 3px solid white;
             color: white;
-            font-size: 36px;
+            font-size: 20px;
             font-weight: bold;
             position: absolute;
             left: 50%;
@@ -364,7 +364,7 @@
             .status-icon {
                 width: 70px;
                 height: 70px;
-                font-size: 32px;
+                font-size: 18px;
                 bottom: -35px;
                 line-height: 64px;
             }
@@ -416,7 +416,7 @@
     <div id="statusScreen" class="status-screen">
         <div class="status-container">
             <div id="statusHeader" class="status-header success">
-                <div id="statusIcon" class="status-icon">✓</div>
+                <div id="statusIcon" class="status-icon">OK</div>
             </div>
             <div class="status-content">
                 <h1 id="statusTitle" class="status-title">Seu pagamento foi aprovado</h1>
@@ -527,7 +527,7 @@
                 
                 if (type === 'success') {
                     statusHeader.className = 'status-header success';
-                    statusIcon.textContent = '✓';
+                    statusIcon.textContent = 'OK';
                     statusTitle.textContent = 'Seu pagamento foi aprovado';
                     statusSubtitle.textContent = 'Parabéns! Agora você pode acessar seu resultado personalizado do Teste de Prosperidade.';
                     resultButton.textContent = 'Ver Resultado do Teste Agora';
@@ -539,7 +539,7 @@
                     
                 } else if (type === 'pix') {
                     statusHeader.className = 'status-header processing';
-                    statusIcon.textContent = '⏳';
+                    statusIcon.textContent = 'PIX';
                     statusTitle.textContent = 'Pague com PIX';
                     statusSubtitle.textContent = 'Escaneie o QR Code ou copie o código PIX para concluir seu pagamento.';
                     resultButton.textContent = 'Já paguei - Ver meu resultado';
@@ -561,7 +561,7 @@
                     
                 } else if (type === 'processing') {
                     statusHeader.className = 'status-header processing';
-                    statusIcon.textContent = '⏳';
+                    statusIcon.textContent = '•••';
                     statusTitle.textContent = 'Processando seu pagamento';
                     statusSubtitle.textContent = 'Aguarde enquanto confirmamos seu pagamento...';
                     countdownSection.style.display = 'none';
@@ -571,7 +571,7 @@
                     
                 } else if (type === 'error') {
                     statusHeader.className = 'status-header error';
-                    statusIcon.textContent = '❌';
+                    statusIcon.textContent = 'X';
                     statusTitle.textContent = 'Erro no pagamento';
                     statusSubtitle.textContent = 'Não foi possível processar seu pagamento. Tente novamente com outro método de pagamento.';
                     countdownSection.style.display = 'none';
