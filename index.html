@@ -97,7 +97,9 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Status Screen Styles */
+        /* ============================================ */
+        /* Status Screen Styles - CORRIGIDO PARA ROLAGEM */
+        /* ============================================ */
         .status-screen {
             display: none;
             background: #f5f5f5;
@@ -108,20 +110,26 @@
             left: 0;
             z-index: 1000;
             padding: 20px;
+            overflow-y: auto; /* CORRIGIDO: Permitir rolagem na tela toda */
+            -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
         }
 
         .status-container {
             max-width: 600px;
             margin: 0 auto;
             padding-top: 40px;
+            min-height: calc(100vh - 40px); /* CORRIGIDO: Altura mínima */
+            display: flex; /* CORRIGIDO: Layout flexível */
+            flex-direction: column; /* CORRIGIDO: Vertical */
         }
 
         .status-header {
             border-radius: 20px 20px 0 0;
-            padding: 60px 0 20px;
+            padding: 40px 0 20px;
             text-align: center;
             position: relative;
             margin-bottom: 0;
+            flex-shrink: 0; /* CORRIGIDO: Não diminuir */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -163,6 +171,8 @@
             padding: 60px 40px 40px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             position: relative;
+            flex: 1; /* CORRIGIDO: Ocupar espaço disponível */
+            overflow-y: auto; /* CORRIGIDO: Rolagem no conteúdo */
         }
 
         .status-title {
@@ -267,19 +277,6 @@
         .action-button:hover {
             background: #40a9ff;
         }
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            margin: 16px auto;
-            display: block;
-        }
-
-        .action-button:hover {
-            background: #40a9ff;
-        }
 
         .back-link {
             display: block;
@@ -294,23 +291,30 @@
             text-decoration: underline;
         }
 
+        /* ============================================ */
+        /* PIX Info - CORRIGIDO PARA ROLAGEM */
+        /* ============================================ */
         .pix-info {
             background: #f0f9ff;
             border: 1px solid #b3d4fc;
             border-radius: 8px;
             padding: 16px;
             margin-top: 20px;
-            max-height: 70vh;
-            overflow-y: auto;
+            max-height: 50vh; /* CORRIGIDO: Altura máxima menor */
+            overflow-y: auto; /* CORRIGIDO: Rolagem */
+            -webkit-overflow-scrolling: touch; /* CORRIGIDO: Rolagem suave no iOS */
         }
 
         .pix-qr {
             text-align: center;
             margin: 20px 0;
+            padding: 10px 0;
         }
 
         .pix-qr img {
-            max-width: 200px;
+            max-width: 180px; /* CORRIGIDO: Menor para caber melhor */
+            width: 100%;
+            height: auto;
             border: 1px solid #ddd;
             border-radius: 8px;
         }
@@ -321,9 +325,12 @@
             border-radius: 4px;
             padding: 12px;
             font-family: monospace;
-            font-size: 12px;
+            font-size: 11px; /* CORRIGIDO: Menor para caber melhor */
             word-break: break-all;
             margin: 10px 0;
+            max-height: 100px; /* CORRIGIDO: Altura máxima */
+            overflow-y: auto; /* CORRIGIDO: Rolagem no código PIX */
+            line-height: 1.4;
         }
 
         .copy-button {
@@ -340,6 +347,38 @@
             background: #389e0d;
         }
 
+        /* ============================================ */
+        /* Scrollbars Personalizadas */
+        /* ============================================ */
+        .pix-info::-webkit-scrollbar,
+        .pix-code::-webkit-scrollbar,
+        .status-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .pix-info::-webkit-scrollbar-track,
+        .pix-code::-webkit-scrollbar-track,
+        .status-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .pix-info::-webkit-scrollbar-thumb,
+        .pix-code::-webkit-scrollbar-thumb,
+        .status-content::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .pix-info::-webkit-scrollbar-thumb:hover,
+        .pix-code::-webkit-scrollbar-thumb:hover,
+        .status-content::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* ============================================ */
+        /* Media Queries - Mobile Responsivo */
+        /* ============================================ */
         @media (max-width: 600px) {
             .checkout-container {
                 margin: 0 16px;
@@ -350,12 +389,17 @@
                 padding: 20px 24px 12px;
             }
             
+            .status-screen {
+                padding: 10px; /* CORRIGIDO: Menor padding em mobile */
+            }
+            
             .status-container {
                 padding-top: 20px;
+                min-height: calc(100vh - 20px);
             }
             
             .status-content {
-                padding: 60px 24px 24px;
+                padding: 40px 20px 30px; /* CORRIGIDO: Menor padding em mobile */
             }
             
             .status-title {
@@ -375,6 +419,22 @@
                 width: 90%;
                 max-width: 280px;
                 text-align: center;
+            }
+
+            /* PIX Info - Mobile */
+            .pix-info {
+                max-height: 40vh; /* CORRIGIDO: Menor em mobile */
+                margin-top: 15px;
+            }
+            
+            .pix-qr img {
+                max-width: 150px; /* CORRIGIDO: Menor para mobile */
+            }
+            
+            .pix-code {
+                font-size: 10px; /* CORRIGIDO: Menor para mobile */
+                padding: 10px;
+                max-height: 80px;
             }
         }
 
