@@ -268,6 +268,11 @@
             background: #40a9ff;
         }
 
+        .action-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
         .back-link {
             display: block;
             text-align: center;
@@ -325,6 +330,26 @@
 
         .copy-button:hover {
             background: #389e0d;
+        }
+
+        .status-monitor {
+            background: #f0f9ff;
+            border: 1px solid #b3d4fc;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            font-size: 13px;
+            color: #1890ff;
+        }
+
+        .duplicate-warning {
+            background: #fff7e6;
+            border: 1px solid #ffd666;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            color: #d46b08;
+            text-align: center;
         }
 
         @media (max-width: 600px) {
@@ -408,6 +433,17 @@
                 <h1 id="statusTitle" class="status-title">Seu pagamento foi aprovado</h1>
                 <p id="statusSubtitle" class="status-subtitle"></p>
                 
+                <!-- Monitor de Status (Novo) -->
+                <div id="statusMonitor" class="status-monitor" style="display: none;">
+                    Status: <strong><span id="currentStatus">processando</span></strong> | 
+                    Última atualização: <span id="lastUpdate">--</span>
+                </div>
+
+                <!-- Aviso de Duplicação (Novo) -->
+                <div id="duplicateWarning" class="duplicate-warning" style="display: none;">
+                    ⚠️ Esta transação já foi processada. Se você não conseguiu acessar seu resultado, clique no botão abaixo.
+                </div>
+                
                 <div class="payment-details">
                     <div class="detail-row">
                         <div class="detail-icon">💰</div>
@@ -455,34 +491,104 @@
 
     <script>
         // ============================================
-        // 🔧 CONFIGURAÇÃO PARA PRODUÇÃO - ERRO 2006 CORRIGIDO
+        // CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
-        
-        // ✅ PUBLIC KEY DE PRODUÇÃO (deve coincidir com a conta do ACCESS_TOKEN no backend)
-        const PUBLIC_KEY = 'APP_USR-6bf229eb-ff25-4484-957a-6bd50fb737a0';
+        const PUBLIC_KEY = 'APP_USR-d6a5ce3d-f58e-4ad8-9ae8-22ff5ff2bb14'; // ✅ USAR SUA PUBLIC KEY DE PRODUÇÃO
         
         // Obter UID da URL ou gerar um para teste
         const urlParams = new URLSearchParams(window.location.search);
-        const userUID = urlParams.get('uid') || `prod-${Date.now()}`;
+        const userUID = urlParams.get('uid') || `test-${Date.now()}`;
         
         console.log('🆔 UID do usuário:', userUID);
-        console.log('🔑 Public Key (PRODUÇÃO):', PUBLIC_KEY);
-        console.log('🌐 Backend URL:', BACKEND_URL);
 
-        // ✅ INICIALIZAR MERCADO PAGO - SANDBOX DESATIVADO
-        const mp = new MercadoPago(PUBLIC_KEY, { 
-            locale: 'pt',
-            sandbox: false  // ← CRITICAL: SANDBOX DESATIVADO PARA PRODUÇÃO
-        });
+        // Inicializar Mercado Pago
+        const mp = new MercadoPago(PUBLIC_KEY, { locale: 'pt' });
         const bricksBuilder = mp.bricks();
 
-        console.log('🏭 Modo Sandbox:', false);
-        console.log('🚀 Iniciando Mercado Pago em modo PRODUÇÃO');
+        // ============================================
+        // VERIFICAÇÃO DE TRANSAÇÃO EXISTENTE
+        // ============================================
+
+        async function checkExistingTransaction() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/transaction/${userUID}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📋 Transação existente encontrada:', data);
+                    
+                    if (data.isCompleted) {
+                        console.log('✅ Transação já foi completada, mostrando status');
+                        showStatusScreen('success', { 
+                            id: data.paymentId,
+                            status: data.status,
+                            showDuplicateWarning: true 
+                        });
+                        return true;
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.log('ℹ️ Nenhuma transação existente encontrada');
+                return false;
+            }
+        }
 
         // ============================================
-        // FUNÇÕES DE STATUS SCREEN
+        // MONITORAMENTO DE STATUS EM TEMPO REAL
+        // ============================================
+
+        let statusCheckInterval = null;
+
+        function startStatusMonitoring(uid) {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+
+            statusCheckInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${BACKEND_URL}/api/transaction/${uid}`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('📊 Status atualizado:', data);
+                        
+                        updateStatusMonitor(data.status, data.lastUpdate);
+                        
+                        // Se ficou completo, parar monitoramento e redirecionar
+                        if (data.isCompleted && data.status !== 'processing') {
+                            clearInterval(statusCheckInterval);
+                            
+                            if (data.status === 'approved' || data.status === 'completed') {
+                                showStatusScreen('success', { 
+                                    id: data.paymentId,
+                                    status: data.status 
+                                });
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.log('❌ Erro ao verificar status:', error);
+                }
+            }, 3000); // Verificar a cada 3 segundos
+        }
+
+        function updateStatusMonitor(status, lastUpdate) {
+            const monitor = document.getElementById('statusMonitor');
+            const currentStatusEl = document.getElementById('currentStatus');
+            const lastUpdateEl = document.getElementById('lastUpdate');
+            
+            if (monitor && currentStatusEl && lastUpdateEl) {
+                monitor.style.display = 'block';
+                currentStatusEl.textContent = status;
+                lastUpdateEl.textContent = new Date(lastUpdate).toLocaleTimeString('pt-BR');
+            }
+        }
+
+        // ============================================
+        // FUNÇÕES DE STATUS SCREEN (MELHORADAS)
         // ============================================
 
         function showStatusScreen(type = 'success', paymentData = {}) {
@@ -497,6 +603,7 @@
             const operationDate = document.getElementById('operationDate');
             const paymentId = document.getElementById('paymentId');
             const pixSection = document.getElementById('pixSection');
+            const duplicateWarning = document.getElementById('duplicateWarning');
 
             // Configurar data/hora atual
             const now = new Date();
@@ -512,6 +619,11 @@
             // Configurar ID do pagamento
             if (paymentData.id) {
                 paymentId.textContent = paymentData.id;
+            }
+
+            // Mostrar aviso de duplicação se necessário
+            if (paymentData.showDuplicateWarning) {
+                duplicateWarning.style.display = 'block';
             }
 
             // Ocultar checkout com transição
@@ -530,8 +642,10 @@
                     countdownSection.style.display = 'block';
                     pixSection.style.display = 'none';
                     
-                    // Iniciar countdown de 10 segundos
-                    startCountdown();
+                    // Iniciar countdown apenas se não for duplicação
+                    if (!paymentData.showDuplicateWarning) {
+                        startCountdown();
+                    }
                     
                 } else if (type === 'pix') {
                     statusHeader.className = 'status-header processing';
@@ -555,6 +669,9 @@
                     
                     pixSection.style.display = 'block';
                     
+                    // Iniciar monitoramento para PIX
+                    startStatusMonitoring(userUID);
+                    
                 } else if (type === 'processing') {
                     statusHeader.className = 'status-header processing';
                     statusIcon.textContent = '⏳';
@@ -564,6 +681,9 @@
                     pixSection.style.display = 'none';
                     resultButton.textContent = 'Aguarde...';
                     resultButton.disabled = true;
+                    
+                    // Iniciar monitoramento
+                    startStatusMonitoring(userUID);
                     
                 } else if (type === 'error') {
                     statusHeader.className = 'status-header error';
@@ -589,7 +709,7 @@
             }, 300);
         }
 
-        // Função de countdown
+        // Função de countdown (mantida igual)
         function startCountdown() {
             let seconds = 10;
             const timer = document.getElementById('countdownTimer');
@@ -604,27 +724,30 @@
                 }
             }, 1000);
 
-            // Salvar interval para poder cancelar se usuário clicar no botão
             window.countdownInterval = interval;
         }
 
-        // Função para redirecionar ao resultado
+        // Função para redirecionar ao resultado (mantida igual)
         function redirectToResult() {
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
             }
-            // Redirecionar para página de resultado com UID
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
             window.location.href = `https://www.suellenseragi.com.br/resultado?uid=${userUID}`;
         }
 
-        // Função para voltar
+        // Função para voltar (mantida igual)
         function goBack() {
             const checkoutSection = document.getElementById('checkoutSection');
             const statusScreen = document.getElementById('statusScreen');
             
-            // Limpar qualquer countdown ativo
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
+            }
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
             }
             
             statusScreen.style.display = 'none';
@@ -634,11 +757,10 @@
             checkoutSection.classList.remove('fade-out');
             checkoutSection.classList.add('fade-in');
             
-            // Resetar estilos do container
             checkoutSection.style.transition = 'all 0.3s ease';
         }
 
-        // Função para copiar código PIX
+        // Função para copiar código PIX (mantida igual)
         function copyPixCode() {
             if (window.pixCodeToCopy) {
                 navigator.clipboard.writeText(window.pixCodeToCopy).then(() => {
@@ -656,14 +778,11 @@
         }
 
         // ============================================
-        // PAYMENT BRICK CONFIGURATION - PRODUÇÃO
+        // PAYMENT BRICK CONFIGURATION (MELHORADO)
         // ============================================
 
         const renderPaymentBrick = async (bricksBuilder) => {
             try {
-                console.log('🚀 Criando Payment Brick para PRODUÇÃO...');
-                console.log('🔒 Sandbox desativado:', false);
-                
                 const settings = {
                     initialization: {
                         amount: 10, // R$ 10,00
@@ -682,30 +801,30 @@
                         paymentMethods: {
                             creditCard: ["visa", "master"],
                             bankTransfer: ["pix"],
-                            maxInstallments: 1
+                            maxInstallments: 1,
+                            excludedPaymentMethods: [
+                                { id: "elo" },
+                                { id: "hipercard" },
+                                { id: "debelo" }
+                            ]
                         },
                     },
                     callbacks: {
                         onReady: () => {
-                            console.log('✅ Payment Brick carregado com sucesso (PRODUÇÃO)');
-                            console.log('🔐 Modo sandbox:', false);
+                            console.log('✅ Payment Brick carregado com sucesso');
                             
-                            // REMOVER O LOADING quando o brick estiver pronto
                             const loadingElement = document.querySelector('.loading-state');
                             if (loadingElement) {
                                 loadingElement.style.display = 'none';
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('💳 Processando pagamento em PRODUÇÃO');
-                            console.log('📊 Dados do pagamento:', formData);
+                            console.log('💳 Dados do pagamento:', formData);
                             console.log('💳 Método selecionado:', selectedPaymentMethod);
                             
-                            // Mostrar status de processamento
                             showStatusScreen('processing');
                             
                             return new Promise((resolve, reject) => {
-                                // Adicionar UID aos dados
                                 const paymentData = {
                                     ...formData,
                                     uid: userUID,
@@ -713,9 +832,6 @@
                                     transaction_amount: 10
                                 };
 
-                                console.log('📤 Enviando para backend (PRODUÇÃO):', paymentData);
-
-                                // Enviar para backend
                                 fetch(`${BACKEND_URL}/api/process_payment`, {
                                     method: 'POST',
                                     headers: {
@@ -725,54 +841,70 @@
                                     body: JSON.stringify(paymentData),
                                 })
                                 .then(response => {
-                                    console.log('📥 Status da resposta:', response.status);
                                     if (!response.ok) {
-                                        return response.json().then(err => {
-                                            throw new Error(`HTTP ${response.status}: ${err.message || 'Erro desconhecido'}`);
-                                        });
+                                        throw new Error(`HTTP ${response.status}`);
                                     }
                                     return response.json();
                                 })
                                 .then(result => {
-                                    console.log('✅ Resposta do backend (PRODUÇÃO):', result);
+                                    console.log('✅ Resposta do backend:', result);
+                                    
+                                    if (result.error === 'Transação já processada') {
+                                        // Transação duplicada
+                                        showStatusScreen('success', { 
+                                            id: result.uid,
+                                            showDuplicateWarning: true 
+                                        });
+                                        resolve();
+                                        return;
+                                    }
                                     
                                     if (result.status === 'approved') {
-                                        // Pagamento aprovado - cartão de crédito
-                                        console.log('🎉 Pagamento APROVADO em produção!');
                                         showStatusScreen('success', result);
                                         resolve();
                                     } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        // PIX criado - mostrar QR Code
-                                        console.log('💰 PIX criado em produção');
                                         showStatusScreen('pix', result);
                                         resolve();
                                     } else if (result.status === 'pending') {
-                                        // Outros casos pendentes
-                                        console.log('⏳ Pagamento pendente em produção');
                                         showStatusScreen('processing', result);
                                         resolve();
                                     } else {
-                                        // Erro ou rejeitado
-                                        console.error('❌ Pagamento rejeitado em produção:', result);
                                         showStatusScreen('error', result);
                                         reject();
                                     }
                                 })
                                 .catch(error => {
-                                    console.error('❌ Erro no pagamento (PRODUÇÃO):', error);
-                                    if (error.message.includes('2006')) {
-                                        console.error('🚨 ERRO 2006 detectado - verificar credenciais!');
+                                    console.error('❌ Erro no pagamento:', error);
+                                    
+                                    if (error.message.includes('409')) {
+                                        // Conflito - transação já processada
+                                        showStatusScreen('success', { 
+                                            showDuplicateWarning: true 
+                                        });
+                                        resolve();
+                                    } else {
+                                        showStatusScreen('error');
+                                        reject();
                                     }
-                                    showStatusScreen('error');
-                                    reject();
                                 });
                             });
                         },
                         onError: (error) => {
-                            console.error('❌ Erro Payment Brick (PRODUÇÃO):', error);
-                            console.log('🔍 Detalhes do erro:', JSON.stringify(error, null, 2));
+                            console.error('❌ Erro Payment Brick:', error);
                             
-                            showStatusScreen('error');
+                            if (window.paymentBrickController) {
+                                try {
+                                    window.paymentBrickController.unmount();
+                                } catch (e) {
+                                    console.log('Brick já estava desmontado');
+                                }
+                                window.paymentBrickController = null;
+                            }
+                            
+                            setTimeout(() => {
+                                console.log('🔄 Tentando recriar Payment Brick...');
+                                renderSimplePaymentBrick(bricksBuilder);
+                            }, 2000);
                         },
                     },
                 };
@@ -783,10 +915,8 @@
                     settings
                 );
                 
-                console.log('✅ Payment Brick criado com sucesso (PRODUÇÃO)');
-                console.log('🔐 Confirmação: Sandbox desativado');
+                console.log('✅ Payment Brick criado com sucesso');
                 
-                // GARANTIR que o loading seja removido após criação
                 setTimeout(() => {
                     const loadingElement = document.querySelector('.loading-state');
                     if (loadingElement) {
@@ -795,13 +925,118 @@
                 }, 2000);
                 
             } catch (error) {
-                console.error('❌ Erro ao criar Payment Brick (PRODUÇÃO):', error);
+                console.error('❌ Erro ao criar Payment Brick:', error);
+                renderSimplePaymentBrick(bricksBuilder);
+            }
+        };
+
+        // Função com configuração mais simples para fallback (mantida igual)
+        const renderSimplePaymentBrick = async (bricksBuilder) => {
+            try {
+                document.getElementById('paymentBrick_container').innerHTML = `
+                    <div class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Carregando sistema básico de pagamento...</p>
+                    </div>
+                `;
+
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                const simpleSettings = {
+                    initialization: {
+                        amount: 10,
+                    },
+                    customization: {
+                        paymentMethods: {
+                            creditCard: ["visa", "master"],
+                            bankTransfer: ["pix"],
+                            maxInstallments: 1,
+                            excludedPaymentMethods: [
+                                { id: "elo" },
+                                { id: "hipercard" }
+                            ]
+                        },
+                    },
+                    callbacks: {
+                        onReady: () => {
+                            console.log('✅ Payment Brick simples carregado');
+                            
+                            const loadingElement = document.querySelector('.loading-state');
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
+                        },
+                        onSubmit: ({ selectedPaymentMethod, formData }) => {
+                            console.log('💳 Dados do pagamento (simples):', formData);
+                            
+                            showStatusScreen('processing');
+                            
+                            return new Promise((resolve, reject) => {
+                                const paymentData = {
+                                    ...formData,
+                                    uid: userUID,
+                                    description: 'Teste de Prosperidade',
+                                    transaction_amount: 10
+                                };
+
+                                fetch(`${BACKEND_URL}/api/process_payment`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Idempotency-Key': `${userUID}-${Date.now()}`
+                                    },
+                                    body: JSON.stringify(paymentData),
+                                })
+                                .then(response => response.json())
+                                .then(result => {
+                                    console.log('✅ Resposta do backend (simples):', result);
+                                    
+                                    if (result.status === 'approved') {
+                                        showStatusScreen('success', result);
+                                        resolve();
+                                    } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
+                                        showStatusScreen('pix', result);
+                                        resolve();
+                                    } else {
+                                        showStatusScreen('error', result);
+                                        reject();
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('❌ Erro no pagamento (simples):', error);
+                                    showStatusScreen('error');
+                                    reject();
+                                });
+                            });
+                        },
+                        onError: (error) => {
+                            console.error('❌ Erro Payment Brick simples:', error);
+                            showStatusScreen('error');
+                        },
+                    },
+                };
+
+                window.paymentBrickController = await bricksBuilder.create(
+                    "payment",
+                    "paymentBrick_container",
+                    simpleSettings
+                );
                 
-                // Mostrar erro de inicialização
+                console.log('✅ Payment Brick simples criado');
+                
+                setTimeout(() => {
+                    const loadingElement = document.querySelector('.loading-state');
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Erro crítico no Payment Brick:', error);
                 document.getElementById('paymentBrick_container').innerHTML = `
                     <div class="loading-state">
                         <p style="color: #ff4d4f;">Erro ao carregar pagamentos</p>
-                        <p style="font-size: 14px; color: #666;">Verifique sua conexão e recarregue a página</p>
+                        <p style="font-size: 14px; color: #666;">Recarregue a página para tentar novamente</p>
                         <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
                             Recarregar Página
                         </button>
@@ -811,50 +1046,30 @@
         };
 
         // ============================================
-        // INICIALIZAÇÃO DA APLICAÇÃO
+        // INICIALIZAÇÃO DA APLICAÇÃO (MELHORADA)
         // ============================================
 
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Inicializando checkout do Teste de Prosperidade (PRODUÇÃO)');
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Inicializando checkout do Teste de Prosperidade');
             console.log('🆔 UID do usuário:', userUID);
             console.log('🌐 Backend URL:', BACKEND_URL);
-            console.log('🔑 Public Key:', PUBLIC_KEY);
-            console.log('🔒 Sandbox:', false);
-            console.log('🏭 Ambiente: PRODUÇÃO');
             
-            // Verificar conectividade antes de inicializar
-            testBackendConnection().then(isOnline => {
-                if (isOnline) {
-                    console.log('✅ Backend online - iniciando Payment Brick');
-                    renderPaymentBrick(bricksBuilder);
-                } else {
-                    console.error('❌ Backend offline - mostrar erro');
-                    document.getElementById('paymentBrick_container').innerHTML = `
-                        <div class="loading-state">
-                            <p style="color: #ff4d4f;">Serviço temporariamente indisponível</p>
-                            <p style="font-size: 14px; color: #666;">Tente novamente em alguns instantes</p>
-                            <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                                Tentar Novamente
-                            </button>
-                        </div>
-                    `;
-                }
-            });
+            // Verificar se já existe transação para este UID
+            const hasExistingTransaction = await checkExistingTransaction();
+            
+            if (!hasExistingTransaction) {
+                // Só renderizar o brick se não houver transação existente
+                renderPaymentBrick(bricksBuilder);
+            }
         });
 
         // ============================================
-        // FUNÇÕES UTILITÁRIAS
+        // FUNÇÕES UTILITÁRIAS (MANTIDAS)
         // ============================================
 
-        // Função para testar conexão com backend
         async function testBackendConnection() {
             try {
-                const response = await fetch(`${BACKEND_URL}/health`, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
+                const response = await fetch(`${BACKEND_URL}/health`);
                 const data = await response.json();
                 console.log('🏥 Status do backend:', data);
                 return data.status === 'OK';
@@ -863,6 +1078,8 @@
                 return false;
             }
         }
+
+        testBackendConnection();
     </script>
 </body>
 </html>
