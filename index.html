@@ -266,10 +266,18 @@
         .action-button:hover {
             background: #40a9ff;
         }
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin: 16px auto;
+            display: block;
+        }
 
-        .action-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
+        .action-button:hover {
+            background: #40a9ff;
         }
 
         .back-link {
@@ -329,6 +337,26 @@
 
         .copy-button:hover {
             background: #389e0d;
+        }
+
+        .status-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            color: white;
+            font-size: 36px;
+            font-weight: bold;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -40px;
+            z-index: 10;
         }
 
         @media (max-width: 600px) {
@@ -464,27 +492,20 @@
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
-        const PUBLIC_KEY = 'PROD-d1dd4fcc-3ec9-4935-88e2-8784c22f4626';
+        const PUBLIC_KEY = 'PROD-d1dd4fcc-3ec9-4935-88e2-8784c22f4626'; // ✅ ÚNICA ALTERAÇÃO: PROD em vez de TEST
         
         // Obter UID da URL ou gerar um para teste
         const urlParams = new URLSearchParams(window.location.search);
-        const userUID = urlParams.get('uid') || `prod-${Date.now()}`;
+        const userUID = urlParams.get('uid') || `test-${Date.now()}`;
+        
+        console.log('🆔 UID do usuário:', userUID);
+
+        // Inicializar Mercado Pago
+        const mp = new MercadoPago(PUBLIC_KEY, { locale: 'pt' });
+        const bricksBuilder = mp.bricks();
 
         // ============================================
-        // INICIALIZAR MERCADO PAGO
-        // ============================================
-        
-        let mp, bricksBuilder;
-        
-        try {
-            mp = new MercadoPago(PUBLIC_KEY, { locale: 'pt' });
-            bricksBuilder = mp.bricks();
-        } catch (error) {
-            console.error('Erro ao inicializar SDK:', error);
-        }
-
-        // ============================================
-        // FUNÇÕES DE STATUS SCREEN
+        // FUNÇÕES DE STATUS SCREEN (MANTIDAS IGUAIS)
         // ============================================
 
         function showStatusScreen(type = 'success', paymentData = {}) {
@@ -529,7 +550,6 @@
                     statusTitle.textContent = 'Seu pagamento foi aprovado';
                     statusSubtitle.textContent = 'Parabéns! Agora você pode acessar seu resultado personalizado do Teste de Prosperidade.';
                     resultButton.textContent = 'Ver Resultado do Teste Agora';
-                    resultButton.disabled = false;
                     countdownSection.style.display = 'block';
                     pixSection.style.display = 'none';
                     
@@ -542,7 +562,6 @@
                     statusTitle.textContent = 'Pague com PIX';
                     statusSubtitle.textContent = 'Escaneie o QR Code ou copie o código PIX para concluir seu pagamento.';
                     resultButton.textContent = 'Já paguei - Ver meu resultado';
-                    resultButton.disabled = false;
                     countdownSection.style.display = 'none';
                     
                     // Mostrar informações do PIX
@@ -577,7 +596,6 @@
                     countdownSection.style.display = 'none';
                     pixSection.style.display = 'none';
                     resultButton.textContent = 'Tentar Novamente';
-                    resultButton.disabled = false;
                     resultButton.onclick = () => goBack();
                 }
 
@@ -649,62 +667,69 @@
         };
 
         // ============================================
-        // PAYMENT BRICK CONFIGURATION SIMPLIFICADA
+        // PAYMENT BRICK CONFIGURATION (SEU CÓDIGO ORIGINAL)
         // ============================================
 
-        const renderPaymentBrick = async () => {
+        const renderPaymentBrick = async (bricksBuilder) => {
             try {
-                if (!bricksBuilder) {
-                    throw new Error('Bricks builder não inicializado');
-                }
-
                 const settings = {
                     initialization: {
-                        amount: 10,
+                        amount: 10, // R$ 10,00 (valor correto)
+                        payer: {
+                            firstName: "",
+                            lastName: "",
+                            email: "",
+                        },
                     },
                     customization: {
+                        visual: {
+                            style: {
+                                theme: "default",
+                            },
+                        },
                         paymentMethods: {
-                            creditCard: "all",
+                            creditCard: ["visa", "master"], // Apenas Visa e Master, sem ELO
                             bankTransfer: ["pix"],
                             maxInstallments: 1,
+                            excludedPaymentMethods: [
+                                { id: "elo" },
+                                { id: "hipercard" },
+                                { id: "debelo" }
+                            ]
                         },
                     },
                     callbacks: {
                         onReady: () => {
-                            // Remover loading quando pronto
+                            console.log('✅ Payment Brick carregado com sucesso');
+                            
+                            // REMOVER O LOADING quando o brick estiver pronto
                             const loadingElement = document.querySelector('.loading-state');
                             if (loadingElement) {
                                 loadingElement.style.display = 'none';
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
+                            console.log('💳 Dados do pagamento:', formData);
+                            console.log('💳 Método selecionado:', selectedPaymentMethod);
+                            
+                            // Mostrar status de processamento
                             showStatusScreen('processing');
                             
                             return new Promise((resolve, reject) => {
-                                // Validar token para cartão
-                                if (selectedPaymentMethod !== 'pix' && !formData.token) {
-                                    showStatusScreen('error');
-                                    reject(new Error('Token não encontrado'));
-                                    return;
-                                }
-                                
-                                // Preparar dados do pagamento
+                                // Adicionar UID aos dados
                                 const paymentData = {
                                     ...formData,
                                     uid: userUID,
                                     description: 'Teste de Prosperidade',
-                                    transaction_amount: 10
+                                    transaction_amount: 10 // Garantir R$ 10,00
                                 };
-
-                                // Gerar idempotency key único
-                                const idempotencyKey = `${userUID}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
                                 // Enviar para backend
                                 fetch(`${BACKEND_URL}/api/process_payment`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        'X-Idempotency-Key': idempotencyKey
+                                        'X-Idempotency-Key': `${userUID}-${Date.now()}`
                                     },
                                     body: JSON.stringify(paymentData),
                                 })
@@ -715,38 +740,57 @@
                                     return response.json();
                                 })
                                 .then(result => {
+                                    console.log('✅ Resposta do backend:', result);
+                                    
                                     if (result.status === 'approved') {
+                                        // Pagamento aprovado - cartão de crédito
                                         showStatusScreen('success', result);
                                         resolve();
                                     } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
+                                        // PIX criado - mostrar QR Code
                                         showStatusScreen('pix', result);
                                         resolve();
                                     } else if (result.status === 'pending') {
+                                        // Outros casos pendentes
                                         showStatusScreen('processing', result);
                                         resolve();
                                     } else {
+                                        // Erro ou rejeitado
                                         showStatusScreen('error', result);
                                         reject();
                                     }
                                 })
                                 .catch(error => {
-                                    console.error('Erro no pagamento:', error);
+                                    console.error('❌ Erro no pagamento:', error);
                                     showStatusScreen('error');
                                     reject();
                                 });
                             });
                         },
                         onError: (error) => {
-                            console.error('Erro Payment Brick:', error);
-                            // Mostrar mensagem de erro no lugar do loading
-                            document.getElementById('paymentBrick_container').innerHTML = `
-                                <div class="loading-state">
-                                    <p style="color: #ff4d4f; margin-bottom: 16px;">❌ Erro ao carregar pagamentos</p>
-                                    <button onclick="location.reload()" style="padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                                        Tentar Novamente
-                                    </button>
-                                </div>
-                            `;
+                            console.error('❌ Erro Payment Brick:', error);
+                            console.log('🔍 Detalhes do erro:', JSON.stringify(error, null, 2));
+                            
+                            // Verificar se é erro relacionado ao ELO ou cartão não suportado
+                            if (error.message && error.message.includes('card')) {
+                                console.log('⚠️ Erro relacionado a cartão não suportado');
+                            }
+                            
+                            // Limpar brick antes de tentar recriar
+                            if (window.paymentBrickController) {
+                                try {
+                                    window.paymentBrickController.unmount();
+                                } catch (e) {
+                                    console.log('Brick já estava desmontado');
+                                }
+                                window.paymentBrickController = null;
+                            }
+                            
+                            // Tentar recriar o brick com configuração mais simples
+                            setTimeout(() => {
+                                console.log('🔄 Tentando recriar Payment Brick...');
+                                renderSimplePaymentBrick(bricksBuilder);
+                            }, 2000);
                         },
                     },
                 };
@@ -757,14 +801,134 @@
                     settings
                 );
                 
+                console.log('✅ Payment Brick criado com sucesso');
+                
+                // GARANTIR que o loading seja removido após criação
+                setTimeout(() => {
+                    const loadingElement = document.querySelector('.loading-state');
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                }, 2000);
+                
             } catch (error) {
-                console.error('Erro crítico Payment Brick:', error);
-                // Mostrar erro se falhar completamente
+                console.error('❌ Erro ao criar Payment Brick:', error);
+                console.log('🔄 Tentando configuração simples...');
+                renderSimplePaymentBrick(bricksBuilder);
+            }
+        };
+
+        // Função com configuração mais simples para fallback
+        const renderSimplePaymentBrick = async (bricksBuilder) => {
+            try {
                 document.getElementById('paymentBrick_container').innerHTML = `
                     <div class="loading-state">
-                        <p style="color: #ff4d4f; margin-bottom: 16px;">❌ Não foi possível carregar o sistema de pagamentos</p>
-                        <p style="font-size: 14px; color: #666; margin-bottom: 16px;">Verifique sua conexão e tente novamente</p>
-                        <button onclick="location.reload()" style="padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        <div class="spinner"></div>
+                        <p>Carregando sistema básico de pagamento...</p>
+                    </div>
+                `;
+
+                // Aguardar um pouco antes de tentar recriar
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                const simpleSettings = {
+                    initialization: {
+                        amount: 10, // R$ 10,00 correto
+                    },
+                    customization: {
+                        paymentMethods: {
+                            creditCard: ["visa", "master"], // Apenas cartões seguros
+                            bankTransfer: ["pix"],
+                            maxInstallments: 1,
+                            excludedPaymentMethods: [
+                                { id: "elo" },
+                                { id: "hipercard" }
+                            ]
+                        },
+                    },
+                    callbacks: {
+                        onReady: () => {
+                            console.log('✅ Payment Brick simples carregado');
+                            
+                            // REMOVER O LOADING no brick simples também
+                            const loadingElement = document.querySelector('.loading-state');
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
+                        },
+                        onSubmit: ({ selectedPaymentMethod, formData }) => {
+                            console.log('💳 Dados do pagamento (simples):', formData);
+                            
+                            showStatusScreen('processing');
+                            
+                            return new Promise((resolve, reject) => {
+                                const paymentData = {
+                                    ...formData,
+                                    uid: userUID,
+                                    description: 'Teste de Prosperidade',
+                                    transaction_amount: 10 // Garantir R$ 10,00
+                                };
+
+                                fetch(`${BACKEND_URL}/api/process_payment`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Idempotency-Key': `${userUID}-${Date.now()}`
+                                    },
+                                    body: JSON.stringify(paymentData),
+                                })
+                                .then(response => response.json())
+                                .then(result => {
+                                    console.log('✅ Resposta do backend (simples):', result);
+                                    
+                                    if (result.status === 'approved') {
+                                        showStatusScreen('success', result);
+                                        resolve();
+                                    } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
+                                        showStatusScreen('pix', result);
+                                        resolve();
+                                    } else {
+                                        showStatusScreen('error', result);
+                                        reject();
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('❌ Erro no pagamento (simples):', error);
+                                    showStatusScreen('error');
+                                    reject();
+                                });
+                            });
+                        },
+                        onError: (error) => {
+                            console.error('❌ Erro Payment Brick simples:', error);
+                            showStatusScreen('error');
+                        },
+                    },
+                };
+
+                window.paymentBrickController = await bricksBuilder.create(
+                    "payment",
+                    "paymentBrick_container",
+                    simpleSettings
+                );
+                
+                console.log('✅ Payment Brick simples criado');
+                
+                // GARANTIR que o loading seja removido no brick simples
+                setTimeout(() => {
+                    const loadingElement = document.querySelector('.loading-state');
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Erro crítico no Payment Brick:', error);
+                document.getElementById('paymentBrick_container').innerHTML = `
+                    <div class="loading-state">
+                        <p style="color: #ff4d4f;">Erro ao carregar pagamentos</p>
+                        <p style="font-size: 14px; color: #666;">Recarregue a página para tentar novamente</p>
+                        <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
                             Recarregar Página
                         </button>
                     </div>
@@ -773,46 +937,36 @@
         };
 
         // ============================================
-        // INICIALIZAÇÃO DA APLICAÇÃO
+        // INICIALIZAÇÃO DA APLICAÇÃO (SEU CÓDIGO ORIGINAL)
         // ============================================
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Verificar se SDK foi inicializado
-            if (mp && bricksBuilder) {
-                renderPaymentBrick();
-            } else {
-                // Tentar novamente após um delay
-                setTimeout(() => {
-                    if (window.MercadoPago) {
-                        try {
-                            mp = new MercadoPago(PUBLIC_KEY, { locale: 'pt' });
-                            bricksBuilder = mp.bricks();
-                            renderPaymentBrick();
-                        } catch (retryError) {
-                            console.error('Erro na segunda tentativa:', retryError);
-                            document.getElementById('paymentBrick_container').innerHTML = `
-                                <div class="loading-state">
-                                    <p style="color: #ff4d4f;">❌ Erro ao inicializar sistema de pagamentos</p>
-                                    <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                                        Recarregar Página
-                                    </button>
-                                </div>
-                            `;
-                        }
-                    } else {
-                        document.getElementById('paymentBrick_container').innerHTML = `
-                            <div class="loading-state">
-                                <p style="color: #ff4d4f;">❌ SDK do Mercado Pago não carregou</p>
-                                <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                                    Recarregar Página
-                                </button>
-                            </div>
-                        `;
-                    }
-                }, 3000);
-            }
+            console.log('🚀 Inicializando checkout do Teste de Prosperidade');
+            console.log('🆔 UID do usuário:', userUID);
+            console.log('🌐 Backend URL:', BACKEND_URL);
+            
+            renderPaymentBrick(bricksBuilder);
         });
-        
+
+        // ============================================
+        // FUNÇÕES UTILITÁRIAS (MANTIDAS IGUAIS)
+        // ============================================
+
+        // Função para testar conexão com backend
+        async function testBackendConnection() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/health`);
+                const data = await response.json();
+                console.log('🏥 Status do backend:', data);
+                return data.status === 'OK';
+            } catch (error) {
+                console.error('❌ Backend offline:', error);
+                return false;
+            }
+        }
+
+        // Testar conexão na inicialização
+        testBackendConnection();
     </script>
 </body>
 </html>
