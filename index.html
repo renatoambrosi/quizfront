@@ -379,56 +379,6 @@
             opacity: 1;
             transform: translateY(0);
         }
-
-        /* Debug Info */
-        .debug-info {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 4px;
-            padding: 12px;
-            margin: 20px 0;
-            font-size: 12px;
-            font-family: monospace;
-            max-height: 150px;
-            overflow-y: auto;
-            display: none;
-        }
-
-        .debug-toggle {
-            background: #17a2b8;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
-            margin-bottom: 8px;
-        }
-
-        /* Production Mode Indicator */
-        .prod-indicator {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            border-radius: 4px;
-            padding: 8px 12px;
-            margin: 10px 0;
-            font-size: 12px;
-            text-align: center;
-            font-weight: 500;
-        }
-
-        .test-indicator {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            border-radius: 4px;
-            padding: 8px 12px;
-            margin: 10px 0;
-            font-size: 12px;
-            text-align: center;
-            font-weight: 500;
-        }
     </style>
 </head>
 <body>
@@ -441,15 +391,6 @@
                 <span class="icon">💡</span>
                 Complete o pagamento para acessar seu resultado personalizado
             </div>
-            
-            <!-- Production Mode Indicator -->
-            <div id="modeIndicator" class="prod-indicator">
-                🟢 MODO PRODUÇÃO ATIVO
-            </div>
-            
-            <!-- Debug Toggle -->
-            <button class="debug-toggle" onclick="toggleDebug()">Debug Info</button>
-            <div id="debugInfo" class="debug-info"></div>
         </div>
 
         <div class="payment-container">
@@ -519,83 +460,27 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÕES E VARIÁVEIS GLOBAIS - PRODUÇÃO
+        // CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
-        
-        // ✅ CREDENCIAIS DE PRODUÇÃO FORÇADAS
         const PUBLIC_KEY = 'PROD-d1dd4fcc-3ec9-4935-88e2-8784c22f4626';
-        
-        // ✅ LOGS DE VERIFICAÇÃO DE AMBIENTE
-        console.log('🔍 PUBLIC_KEY sendo usada:', PUBLIC_KEY);
-        console.log('🔍 Ambiente detectado:', PUBLIC_KEY.startsWith('PROD') ? '🟢 PRODUÇÃO' : '🔴 TESTE');
-        console.log('🔍 Backend URL:', BACKEND_URL);
         
         // Obter UID da URL ou gerar um para teste
         const urlParams = new URLSearchParams(window.location.search);
         const userUID = urlParams.get('uid') || `prod-${Date.now()}`;
-        
-        console.log('🆔 UID do usuário:', userUID);
-
-        // ✅ ATUALIZAR INDICADOR VISUAL DE AMBIENTE
-        const modeIndicator = document.getElementById('modeIndicator');
-        if (PUBLIC_KEY.startsWith('PROD')) {
-            modeIndicator.className = 'prod-indicator';
-            modeIndicator.innerHTML = '🟢 MODO PRODUÇÃO ATIVO - Cartões reais aceitos';
-        } else {
-            modeIndicator.className = 'test-indicator';
-            modeIndicator.innerHTML = '🔴 MODO TESTE - Apenas cartões de teste';
-        }
 
         // ============================================
-        // DEBUG FUNCTIONS
-        // ============================================
-        
-        function debugLog(message, data = null) {
-            const timestamp = new Date().toLocaleTimeString();
-            const debugElement = document.getElementById('debugInfo');
-            const logEntry = `[${timestamp}] ${message}${data ? '\n' + JSON.stringify(data, null, 2) : ''}`;
-            
-            if (debugElement) {
-                debugElement.textContent += logEntry + '\n\n';
-                debugElement.scrollTop = debugElement.scrollHeight;
-            }
-            
-            console.log(`🔍 ${message}`, data);
-        }
-        
-        function toggleDebug() {
-            const debugElement = document.getElementById('debugInfo');
-            debugElement.style.display = debugElement.style.display === 'none' ? 'block' : 'none';
-        }
-
-        // ============================================
-        // INICIALIZAR MERCADO PAGO - MODO PRODUÇÃO FORÇADO
+        // INICIALIZAR MERCADO PAGO
         // ============================================
         
         let mp, bricksBuilder;
         
         try {
-            // ✅ CONFIGURAÇÃO FORÇADA PARA PRODUÇÃO
-            mp = new MercadoPago(PUBLIC_KEY, { 
-                locale: 'pt',
-                advancedFraudPrevention: false,  // ✅ Desabilitar para evitar conflitos
-                trackingDisabled: false          // ✅ Manter tracking ativo
-            });
-            
+            mp = new MercadoPago(PUBLIC_KEY, { locale: 'pt' });
             bricksBuilder = mp.bricks();
-            
-            debugLog('✅ MercadoPago SDK inicializado em PRODUÇÃO', { 
-                publicKey: PUBLIC_KEY.substring(0, 20) + '...',
-                ambiente: 'PRODUÇÃO'
-            });
-            
-            console.log('✅ MercadoPago SDK configurado para PRODUÇÃO');
-            
         } catch (error) {
-            debugLog('❌ Erro ao inicializar MercadoPago SDK', error);
-            console.error('❌ Erro crítico ao inicializar SDK:', error);
+            console.error('Erro ao inicializar SDK:', error);
         }
 
         // ============================================
@@ -614,8 +499,6 @@
             const operationDate = document.getElementById('operationDate');
             const paymentId = document.getElementById('paymentId');
             const pixSection = document.getElementById('pixSection');
-
-            debugLog(`📱 Mostrando status screen: ${type}`, paymentData);
 
             // Configurar data/hora atual
             const now = new Date();
@@ -728,7 +611,6 @@
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
             }
-            debugLog('🔄 Redirecionando para resultado', { uid: userUID });
             // Redirecionar para página de resultado com UID
             window.location.href = `https://www.suellenseragi.com.br/resultado?uid=${userUID}`;
         }
@@ -742,8 +624,6 @@
             checkoutSection.style.display = 'flex';
             checkoutSection.classList.remove('fade-out');
             checkoutSection.classList.add('fade-in');
-            
-            debugLog('🔙 Voltando ao checkout');
         }
 
         // Função para copiar código PIX
@@ -759,8 +639,6 @@
                         button.textContent = originalText;
                         button.style.background = '#52c41a';
                     }, 2000);
-                    
-                    debugLog('📋 Código PIX copiado');
                 });
             }
         }
@@ -771,65 +649,40 @@
         };
 
         // ============================================
-        // PAYMENT BRICK CONFIGURATION - PRODUÇÃO
+        // PAYMENT BRICK CONFIGURATION SIMPLIFICADA
         // ============================================
 
-        const renderPaymentBrick = async (bricksBuilder) => {
+        const renderPaymentBrick = async () => {
             try {
-                debugLog('🎨 Iniciando renderização do Payment Brick em PRODUÇÃO');
+                if (!bricksBuilder) {
+                    throw new Error('Bricks builder não inicializado');
+                }
 
                 const settings = {
                     initialization: {
-                        amount: 10, // R$ 10,00 fixo
-                        payer: {
-                            firstName: "",
-                            lastName: "",
-                            email: "",
-                        },
+                        amount: 10,
                     },
                     customization: {
-                        visual: {
-                            style: {
-                                theme: "default",
-                            },
-                        },
                         paymentMethods: {
-                            creditCard: "all",         // ✅ Aceitar todos cartões de crédito
-                            bankTransfer: ["pix"],     // ✅ PIX habilitado
-                            maxInstallments: 1,        // ✅ Máximo 1 parcela
-                            // ✅ REMOVER exclusões para produção - aceitar todos os cartões
+                            creditCard: "all",
+                            bankTransfer: ["pix"],
+                            maxInstallments: 1,
                         },
                     },
                     callbacks: {
                         onReady: () => {
-                            debugLog('✅ Payment Brick está pronto - MODO PRODUÇÃO');
-                            console.log('✅ Payment Brick carregado com sucesso em PRODUÇÃO');
-                            
-                            // Remover loading
+                            // Remover loading quando pronto
                             const loadingElement = document.querySelector('.loading-state');
                             if (loadingElement) {
                                 loadingElement.style.display = 'none';
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            debugLog('💳 Iniciando submissão de pagamento PRODUÇÃO', {
-                                selectedPaymentMethod,
-                                formData: { 
-                                    ...formData, 
-                                    token: formData.token ? '[TOKEN_HIDDEN_PROD]' : 'NO_TOKEN' 
-                                }
-                            });
-
-                            console.log('💳 Dados do pagamento PRODUÇÃO:', formData);
-                            console.log('💳 Método selecionado:', selectedPaymentMethod);
-                            
-                            // Mostrar status de processamento
                             showStatusScreen('processing');
                             
                             return new Promise((resolve, reject) => {
-                                // ✅ VALIDAR TOKEN ANTES DE ENVIAR
+                                // Validar token para cartão
                                 if (selectedPaymentMethod !== 'pix' && !formData.token) {
-                                    debugLog('❌ Token não encontrado no formData');
                                     showStatusScreen('error');
                                     reject(new Error('Token não encontrado'));
                                     return;
@@ -840,15 +693,10 @@
                                     ...formData,
                                     uid: userUID,
                                     description: 'Teste de Prosperidade',
-                                    transaction_amount: 10 // Garantir R$ 10,00
+                                    transaction_amount: 10
                                 };
-                                
-                                debugLog('📤 Enviando dados PRODUÇÃO para backend', {
-                                    ...paymentData,
-                                    token: paymentData.token ? '[TOKEN_HIDDEN_PROD]' : 'NO_TOKEN'
-                                });
 
-                                // ✅ GERAR NOVO IDEMPOTENCY KEY PARA CADA TENTATIVA
+                                // Gerar idempotency key único
                                 const idempotencyKey = `${userUID}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
                                 // Enviar para backend
@@ -861,70 +709,47 @@
                                     body: JSON.stringify(paymentData),
                                 })
                                 .then(response => {
-                                    debugLog(`📥 Resposta do backend PRODUÇÃO: ${response.status}`, {
-                                        status: response.status,
-                                        ok: response.ok
-                                    });
-                                    
                                     if (!response.ok) {
                                         throw new Error(`HTTP ${response.status}`);
                                     }
                                     return response.json();
                                 })
                                 .then(result => {
-                                    debugLog('✅ Resultado do pagamento PRODUÇÃO', result);
-                                    console.log('✅ Resposta do backend PRODUÇÃO:', result);
-                                    
                                     if (result.status === 'approved') {
-                                        // Pagamento aprovado - cartão de crédito
                                         showStatusScreen('success', result);
                                         resolve();
                                     } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        // PIX criado - mostrar QR Code
                                         showStatusScreen('pix', result);
                                         resolve();
                                     } else if (result.status === 'pending') {
-                                        // Outros casos pendentes
                                         showStatusScreen('processing', result);
                                         resolve();
                                     } else {
-                                        // Erro ou rejeitado
                                         showStatusScreen('error', result);
                                         reject();
                                     }
                                 })
                                 .catch(error => {
-                                    debugLog('❌ Erro na requisição PRODUÇÃO', error);
-                                    console.error('❌ Erro no pagamento PRODUÇÃO:', error);
+                                    console.error('Erro no pagamento:', error);
                                     showStatusScreen('error');
                                     reject();
                                 });
                             });
                         },
                         onError: (error) => {
-                            debugLog('❌ Erro no Payment Brick PRODUÇÃO', error);
-                            console.error('❌ Erro Payment Brick PRODUÇÃO:', error);
-                            
-                            // Limpar brick antes de tentar recriar
-                            if (window.paymentBrickController) {
-                                try {
-                                    window.paymentBrickController.unmount();
-                                } catch (e) {
-                                    console.log('Brick já estava desmontado');
-                                }
-                                window.paymentBrickController = null;
-                            }
-                            
-                            // Tentar recriar o brick após delay
-                            setTimeout(() => {
-                                debugLog('🔄 Tentando recriar Payment Brick PRODUÇÃO...');
-                                renderSimplePaymentBrick(bricksBuilder);
-                            }, 2000);
+                            console.error('Erro Payment Brick:', error);
+                            // Mostrar mensagem de erro no lugar do loading
+                            document.getElementById('paymentBrick_container').innerHTML = `
+                                <div class="loading-state">
+                                    <p style="color: #ff4d4f; margin-bottom: 16px;">❌ Erro ao carregar pagamentos</p>
+                                    <button onclick="location.reload()" style="padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                        Tentar Novamente
+                                    </button>
+                                </div>
+                            `;
                         },
                     },
                 };
-
-                debugLog('🔧 Configurações do Payment Brick PRODUÇÃO', settings);
 
                 window.paymentBrickController = await bricksBuilder.create(
                     "payment",
@@ -932,125 +757,14 @@
                     settings
                 );
                 
-                debugLog('✅ Payment Brick PRODUÇÃO criado com sucesso');
-                console.log('✅ Payment Brick PRODUÇÃO criado com sucesso');
-                
             } catch (error) {
-                debugLog('❌ Erro crítico ao criar Payment Brick PRODUÇÃO', error);
-                console.error('❌ Erro ao criar Payment Brick PRODUÇÃO:', error);
-                renderSimplePaymentBrick(bricksBuilder);
-            }
-        };
-
-        // Função com configuração mais simples para fallback
-        const renderSimplePaymentBrick = async (bricksBuilder) => {
-            try {
-                debugLog('🔄 Renderizando Payment Brick simples PRODUÇÃO (fallback)');
-                
+                console.error('Erro crítico Payment Brick:', error);
+                // Mostrar erro se falhar completamente
                 document.getElementById('paymentBrick_container').innerHTML = `
                     <div class="loading-state">
-                        <div class="spinner"></div>
-                        <p>Carregando sistema básico de pagamento PRODUÇÃO...</p>
-                    </div>
-                `;
-
-                // Aguardar um pouco antes de tentar recriar
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                const simpleSettings = {
-                    initialization: {
-                        amount: 10, // R$ 10,00 fixo
-                    },
-                    customization: {
-                        paymentMethods: {
-                            creditCard: "all",      // ✅ Todos cartões para produção
-                            bankTransfer: ["pix"],
-                            maxInstallments: 1,
-                        },
-                    },
-                    callbacks: {
-                        onReady: () => {
-                            debugLog('✅ Payment Brick simples PRODUÇÃO está pronto');
-                            console.log('✅ Payment Brick simples PRODUÇÃO carregado');
-                            
-                            const loadingElement = document.querySelector('.loading-state');
-                            if (loadingElement) {
-                                loadingElement.style.display = 'none';
-                            }
-                        },
-                        onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            debugLog('💳 Submissão Payment Brick simples PRODUÇÃO', { selectedPaymentMethod });
-                            console.log('💳 Dados do pagamento simples PRODUÇÃO:', formData);
-                            
-                            showStatusScreen('processing');
-                            
-                            return new Promise((resolve, reject) => {
-                                const paymentData = {
-                                    ...formData,
-                                    uid: userUID,
-                                    description: 'Teste de Prosperidade',
-                                    transaction_amount: 10
-                                };
-
-                                const idempotencyKey = `${userUID}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-                                fetch(`${BACKEND_URL}/api/process_payment`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-Idempotency-Key': idempotencyKey
-                                    },
-                                    body: JSON.stringify(paymentData),
-                                })
-                                .then(response => response.json())
-                                .then(result => {
-                                    debugLog('✅ Resposta Payment Brick simples PRODUÇÃO', result);
-                                    console.log('✅ Resposta do backend simples PRODUÇÃO:', result);
-                                    
-                                    if (result.status === 'approved') {
-                                        showStatusScreen('success', result);
-                                        resolve();
-                                    } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        showStatusScreen('pix', result);
-                                        resolve();
-                                    } else {
-                                        showStatusScreen('error', result);
-                                        reject();
-                                    }
-                                })
-                                .catch(error => {
-                                    debugLog('❌ Erro Payment Brick simples PRODUÇÃO', error);
-                                    console.error('❌ Erro no pagamento simples PRODUÇÃO:', error);
-                                    showStatusScreen('error');
-                                    reject();
-                                });
-                            });
-                        },
-                        onError: (error) => {
-                            debugLog('❌ Erro crítico Payment Brick simples PRODUÇÃO', error);
-                            console.error('❌ Erro Payment Brick simples PRODUÇÃO:', error);
-                            showStatusScreen('error');
-                        },
-                    },
-                };
-
-                window.paymentBrickController = await bricksBuilder.create(
-                    "payment",
-                    "paymentBrick_container",
-                    simpleSettings
-                );
-                
-                debugLog('✅ Payment Brick simples PRODUÇÃO criado');
-                console.log('✅ Payment Brick simples PRODUÇÃO criado');
-                
-            } catch (error) {
-                debugLog('❌ Erro crítico Payment Brick simples PRODUÇÃO', error);
-                console.error('❌ Erro crítico no Payment Brick PRODUÇÃO:', error);
-                document.getElementById('paymentBrick_container').innerHTML = `
-                    <div class="loading-state">
-                        <p style="color: #ff4d4f;">❌ Erro ao carregar pagamentos PRODUÇÃO</p>
-                        <p style="font-size: 14px; color: #666;">Recarregue a página para tentar novamente</p>
-                        <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        <p style="color: #ff4d4f; margin-bottom: 16px;">❌ Não foi possível carregar o sistema de pagamentos</p>
+                        <p style="font-size: 14px; color: #666; margin-bottom: 16px;">Verifique sua conexão e tente novamente</p>
+                        <button onclick="location.reload()" style="padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
                             Recarregar Página
                         </button>
                     </div>
@@ -1059,103 +773,45 @@
         };
 
         // ============================================
-        // INICIALIZAÇÃO DA APLICAÇÃO - PRODUÇÃO
+        // INICIALIZAÇÃO DA APLICAÇÃO
         // ============================================
 
         document.addEventListener('DOMContentLoaded', () => {
-            debugLog('🚀 Aplicação PRODUÇÃO iniciada', {
-                uid: userUID,
-                backendUrl: BACKEND_URL,
-                publicKey: PUBLIC_KEY.substring(0, 20) + '...',
-                ambiente: 'PRODUÇÃO'
-            });
-            
-            console.log('🚀 Inicializando checkout PRODUÇÃO do Teste de Prosperidade');
-            console.log('🆔 UID do usuário:', userUID);
-            console.log('🌐 Backend URL:', BACKEND_URL);
-            console.log('🟢 MODO PRODUÇÃO ATIVO - Cartões reais aceitos');
-            
+            // Verificar se SDK foi inicializado
             if (mp && bricksBuilder) {
-                renderPaymentBrick(bricksBuilder);
+                renderPaymentBrick();
             } else {
-                debugLog('❌ SDK não inicializado, tentando novamente...');
+                // Tentar novamente após um delay
                 setTimeout(() => {
                     if (window.MercadoPago) {
                         try {
-                            mp = new MercadoPago(PUBLIC_KEY, { 
-                                locale: 'pt',
-                                advancedFraudPrevention: false 
-                            });
+                            mp = new MercadoPago(PUBLIC_KEY, { locale: 'pt' });
                             bricksBuilder = mp.bricks();
-                            renderPaymentBrick(bricksBuilder);
+                            renderPaymentBrick();
                         } catch (retryError) {
-                            debugLog('❌ Erro na segunda tentativa PRODUÇÃO', retryError);
-                            console.error('❌ Erro na segunda tentativa PRODUÇÃO:', retryError);
+                            console.error('Erro na segunda tentativa:', retryError);
+                            document.getElementById('paymentBrick_container').innerHTML = `
+                                <div class="loading-state">
+                                    <p style="color: #ff4d4f;">❌ Erro ao inicializar sistema de pagamentos</p>
+                                    <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                        Recarregar Página
+                                    </button>
+                                </div>
+                            `;
                         }
+                    } else {
+                        document.getElementById('paymentBrick_container').innerHTML = `
+                            <div class="loading-state">
+                                <p style="color: #ff4d4f;">❌ SDK do Mercado Pago não carregou</p>
+                                <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                    Recarregar Página
+                                </button>
+                            </div>
+                        `;
                     }
-                }, 2000);
+                }, 3000);
             }
         });
-
-        // ============================================
-        // FUNÇÕES UTILITÁRIAS
-        // ============================================
-
-        // Função para testar conexão com backend
-        async function testBackendConnection() {
-            try {
-                debugLog('🏥 Testando conexão com backend PRODUÇÃO...');
-                const response = await fetch(`${BACKEND_URL}/health`);
-                const data = await response.json();
-                debugLog('🏥 Status do backend PRODUÇÃO', data);
-                console.log('🏥 Status do backend PRODUÇÃO:', data);
-                return data.status === 'OK';
-            } catch (error) {
-                debugLog('❌ Backend PRODUÇÃO offline', error);
-                console.error('❌ Backend PRODUÇÃO offline:', error);
-                return false;
-            }
-        }
-
-        // Testar conexão na inicialização
-        testBackendConnection();
-        
-        // ============================================
-        // TRATAMENTO DE ERROS GLOBAIS
-        // ============================================
-        
-        window.addEventListener('error', (event) => {
-            debugLog('❌ Erro global capturado PRODUÇÃO', {
-                message: event.message,
-                filename: event.filename,
-                lineno: event.lineno,
-                colno: event.colno
-            });
-        });
-        
-        window.addEventListener('unhandledrejection', (event) => {
-            debugLog('❌ Promise rejeitada não tratada PRODUÇÃO', event.reason);
-        });
-        
-        // ============================================
-        // FORÇAR LIMPEZA DE CACHE AO CARREGAR
-        // ============================================
-        
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
-            });
-        }
-        
-        // Limpar localStorage se existir
-        try {
-            localStorage.clear();
-            sessionStorage.clear();
-        } catch (e) {
-            console.log('Storage não disponível');
-        }
         
     </script>
 </body>
