@@ -455,34 +455,34 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÕES PARA PRODUÇÃO REAL
+        // 🔧 CONFIGURAÇÃO PARA PRODUÇÃO - ERRO 2006 CORRIGIDO
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
         
-        // 🔑 USAR PUBLIC KEY DE PRODUÇÃO - DEVE SER A MESMA CONTA DO ACCESS TOKEN NO BACKEND
-        const PUBLIC_KEY = process.env.NODE_ENV === 'production' 
-            ? 'APP_USR-d6a5ce3d-f58e-4ad8-9ae8-22ff5ff2bb14'  // Produção
-            : 'TEST-d1dd4fcc-3ec9-4935-88e2-8784c22f4626';     // Teste (fallback)
+        // ✅ PUBLIC KEY DE PRODUÇÃO (deve coincidir com a conta do ACCESS_TOKEN no backend)
+        const PUBLIC_KEY = 'APP_USR-d6a5ce3d-f58e-4ad8-9ae8-22ff5ff2bb14';
         
         // Obter UID da URL ou gerar um para teste
         const urlParams = new URLSearchParams(window.location.search);
-        const userUID = urlParams.get('uid') || `test-${Date.now()}`;
+        const userUID = urlParams.get('uid') || `prod-${Date.now()}`;
         
         console.log('🆔 UID do usuário:', userUID);
-        console.log('🔑 Public Key:', PUBLIC_KEY);
-        console.log('🌐 Ambiente:', process.env.NODE_ENV || 'production');
+        console.log('🔑 Public Key (PRODUÇÃO):', PUBLIC_KEY);
+        console.log('🌐 Backend URL:', BACKEND_URL);
 
-        // Inicializar Mercado Pago com configurações de produção
+        // ✅ INICIALIZAR MERCADO PAGO - SANDBOX DESATIVADO
         const mp = new MercadoPago(PUBLIC_KEY, { 
             locale: 'pt',
-            // ✅ FORÇAR AMBIENTE DE PRODUÇÃO
-            sandbox: false
+            sandbox: false  // ← CRITICAL: SANDBOX DESATIVADO PARA PRODUÇÃO
         });
         const bricksBuilder = mp.bricks();
 
+        console.log('🏭 Modo Sandbox:', false);
+        console.log('🚀 Iniciando Mercado Pago em modo PRODUÇÃO');
+
         // ============================================
-        // FUNÇÕES DE STATUS SCREEN (mantidas iguais)
+        // FUNÇÕES DE STATUS SCREEN
         // ============================================
 
         function showStatusScreen(type = 'success', paymentData = {}) {
@@ -661,11 +661,12 @@
 
         const renderPaymentBrick = async (bricksBuilder) => {
             try {
-                console.log('🚀 Criando Payment Brick para produção...');
+                console.log('🚀 Criando Payment Brick para PRODUÇÃO...');
+                console.log('🔒 Sandbox desativado:', false);
                 
                 const settings = {
                     initialization: {
-                        amount: 10, // R$ 10,00 (valor correto)
+                        amount: 10, // R$ 10,00
                         payer: {
                             firstName: "",
                             lastName: "",
@@ -679,8 +680,7 @@
                             },
                         },
                         paymentMethods: {
-                            // ✅ CONFIGURAÇÃO PARA PRODUÇÃO - CARTÕES PRINCIPAIS
-                            creditCard: ["visa", "master", "amex"],
+                            creditCard: ["visa", "master"],
                             bankTransfer: ["pix"],
                             maxInstallments: 1
                         },
@@ -688,6 +688,7 @@
                     callbacks: {
                         onReady: () => {
                             console.log('✅ Payment Brick carregado com sucesso (PRODUÇÃO)');
+                            console.log('🔐 Modo sandbox:', false);
                             
                             // REMOVER O LOADING quando o brick estiver pronto
                             const loadingElement = document.querySelector('.loading-state');
@@ -696,15 +697,9 @@
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('💳 Dados do pagamento (PRODUÇÃO):', formData);
+                            console.log('💳 Processando pagamento em PRODUÇÃO');
+                            console.log('📊 Dados do pagamento:', formData);
                             console.log('💳 Método selecionado:', selectedPaymentMethod);
-                            
-                            // ✅ VALIDAÇÃO ADICIONAL PARA PRODUÇÃO
-                            if (!formData.token && !formData.payment_method_id) {
-                                console.error('❌ Token ou método de pagamento ausente');
-                                showStatusScreen('error');
-                                return Promise.reject('Dados de pagamento inválidos');
-                            }
                             
                             // Mostrar status de processamento
                             showStatusScreen('processing');
@@ -715,10 +710,10 @@
                                     ...formData,
                                     uid: userUID,
                                     description: 'Teste de Prosperidade',
-                                    transaction_amount: 10 // Garantir R$ 10,00
+                                    transaction_amount: 10
                                 };
 
-                                console.log('📤 Enviando para backend:', paymentData);
+                                console.log('📤 Enviando para backend (PRODUÇÃO):', paymentData);
 
                                 // Enviar para backend
                                 fetch(`${BACKEND_URL}/api/process_payment`, {
@@ -743,25 +738,31 @@
                                     
                                     if (result.status === 'approved') {
                                         // Pagamento aprovado - cartão de crédito
+                                        console.log('🎉 Pagamento APROVADO em produção!');
                                         showStatusScreen('success', result);
                                         resolve();
                                     } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
                                         // PIX criado - mostrar QR Code
+                                        console.log('💰 PIX criado em produção');
                                         showStatusScreen('pix', result);
                                         resolve();
                                     } else if (result.status === 'pending') {
                                         // Outros casos pendentes
+                                        console.log('⏳ Pagamento pendente em produção');
                                         showStatusScreen('processing', result);
                                         resolve();
                                     } else {
                                         // Erro ou rejeitado
-                                        console.error('❌ Pagamento rejeitado:', result);
+                                        console.error('❌ Pagamento rejeitado em produção:', result);
                                         showStatusScreen('error', result);
                                         reject();
                                     }
                                 })
                                 .catch(error => {
                                     console.error('❌ Erro no pagamento (PRODUÇÃO):', error);
+                                    if (error.message.includes('2006')) {
+                                        console.error('🚨 ERRO 2006 detectado - verificar credenciais!');
+                                    }
                                     showStatusScreen('error');
                                     reject();
                                 });
@@ -770,11 +771,6 @@
                         onError: (error) => {
                             console.error('❌ Erro Payment Brick (PRODUÇÃO):', error);
                             console.log('🔍 Detalhes do erro:', JSON.stringify(error, null, 2));
-                            
-                            // ✅ TRATAMENTO ESPECÍFICO PARA ERROS DE PRODUÇÃO
-                            if (error.message && error.message.includes('credentials')) {
-                                console.error('🔑 Erro de credenciais - verificar public key');
-                            }
                             
                             showStatusScreen('error');
                         },
@@ -788,6 +784,7 @@
                 );
                 
                 console.log('✅ Payment Brick criado com sucesso (PRODUÇÃO)');
+                console.log('🔐 Confirmação: Sandbox desativado');
                 
                 // GARANTIR que o loading seja removido após criação
                 setTimeout(() => {
@@ -822,8 +819,10 @@
             console.log('🆔 UID do usuário:', userUID);
             console.log('🌐 Backend URL:', BACKEND_URL);
             console.log('🔑 Public Key:', PUBLIC_KEY);
+            console.log('🔒 Sandbox:', false);
+            console.log('🏭 Ambiente: PRODUÇÃO');
             
-            // ✅ VERIFICAR CONECTIVIDADE ANTES DE INICIALIZAR
+            // Verificar conectividade antes de inicializar
             testBackendConnection().then(isOnline => {
                 if (isOnline) {
                     console.log('✅ Backend online - iniciando Payment Brick');
@@ -854,8 +853,7 @@
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json'
-                    },
-                    timeout: 5000
+                    }
                 });
                 const data = await response.json();
                 console.log('🏥 Status do backend:', data);
