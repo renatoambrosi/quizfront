@@ -154,6 +154,7 @@
             transform: translateX(-50%);
             bottom: -40px;
             z-index: 10;
+            box-sizing: border-box;
         }
 
         .status-content {
@@ -337,26 +338,6 @@
 
         .copy-button:hover {
             background: #389e0d;
-        }
-
-        .status-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            border: 3px solid white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: -40px;
-            z-index: 10;
         }
 
         @media (max-width: 600px) {
@@ -596,7 +577,14 @@
                     countdownSection.style.display = 'none';
                     pixSection.style.display = 'none';
                     resultButton.textContent = 'Tentar Novamente';
+                    resultButton.disabled = false;
                     resultButton.onclick = () => goBack();
+                }
+
+                // Configurar botão de resultado para casos de sucesso e PIX
+                if (type === 'success' || type === 'pix') {
+                    resultButton.onclick = () => redirectToResult();
+                    resultButton.disabled = false;
                 }
 
                 // Mostrar tela de status
@@ -638,10 +626,20 @@
             const checkoutSection = document.getElementById('checkoutSection');
             const statusScreen = document.getElementById('statusScreen');
             
+            // Limpar qualquer countdown ativo
+            if (window.countdownInterval) {
+                clearInterval(window.countdownInterval);
+            }
+            
             statusScreen.style.display = 'none';
-            checkoutSection.style.display = 'flex';
+            statusScreen.classList.remove('fade-in');
+            
+            checkoutSection.style.display = 'block';
             checkoutSection.classList.remove('fade-out');
             checkoutSection.classList.add('fade-in');
+            
+            // Resetar estilos do container
+            checkoutSection.style.transition = 'all 0.3s ease';
         }
 
         // Função para copiar código PIX
@@ -660,11 +658,6 @@
                 });
             }
         }
-
-        // Event listener para botão de resultado
-        document.getElementById('resultButton').onclick = () => {
-            redirectToResult();
-        };
 
         // ============================================
         // PAYMENT BRICK CONFIGURATION
