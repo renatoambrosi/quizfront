@@ -273,6 +273,11 @@
             background: #40a9ff;
         }
 
+        .action-button:disabled {
+            background: #d9d9d9;
+            cursor: not-allowed;
+        }
+
         .back-link {
             display: block;
             text-align: center;
@@ -352,6 +357,32 @@
 
         .status-indicator.error {
             background: #ff4d4f;
+        }
+
+        /* NOVO: Warning de pagamento não confirmado */
+        .warning-box {
+            background: #fff2e8;
+            border: 1px solid #ffbb96;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .warning-box .warning-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .warning-box .warning-text {
+            color: #d46b08;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .warning-box .warning-subtext {
+            color: #666;
+            font-size: 14px;
         }
 
         @media (max-width: 600px) {
@@ -468,6 +499,13 @@
                     </div>
                 </div>
 
+                <!-- NOVO: Warning para PIX não pago -->
+                <div id="pixWarning" class="warning-box" style="display: none;">
+                    <div class="warning-icon">⚠️</div>
+                    <div class="warning-text">Pagamento não confirmado</div>
+                    <div class="warning-subtext">Verificando automaticamente a cada 3 segundos. Aguarde ou efetue o pagamento PIX.</div>
+                </div>
+
                 <!-- Seção PIX (apenas para PIX) -->
                 <div id="pixSection" class="pix-info" style="display: none;">
                     <h3>Pagamento PIX</h3>
@@ -521,14 +559,16 @@
         console.log('🚀 Iniciando Mercado Pago em modo PRODUÇÃO');
 
         // ============================================
-        // NOVO: SISTEMA DE POLLING PARA PIX
+        // NOVO: SISTEMA DE POLLING MELHORADO PARA PIX
         // ============================================
         
         let pollingInterval = null;
         let currentPaymentId = null;
+        let isPaymentConfirmed = false; // NOVO: Flag para controlar se pagamento foi confirmado
 
         function startPolling(paymentId) {
             currentPaymentId = paymentId;
+            isPaymentConfirmed = false; // Reset da flag
             console.log('🔄 Iniciando polling para payment:', paymentId);
             
             updateStatusIndicator('checking', 'Verificando...');
@@ -542,6 +582,7 @@
                     
                     if (data.status === 'approved') {
                         console.log('✅ PIX APROVADO via polling!');
+                        isPaymentConfirmed = true; // NOVO: Marcar como confirmado
                         stopPolling();
                         updateStatusIndicator('success', 'Aprovado!');
                         showStatusScreen('success', data);
@@ -578,16 +619,67 @@
             }
         }
 
+        // NOVO: Função para validar PIX antes de redirecionar
+        async function validatePixBeforeRedirect() {
+            if (isPaymentConfirmed) {
+                // Pagamento já confirmado, pode redirecionar
+                redirectToResult();
+                return;
+            }
+
+            if (!currentPaymentId) {
+                // Não há PIX para verificar, redirecionar direto (caso cartão)
+                redirectToResult();
+                return;
+            }
+
+            // Verificar se PIX foi pago antes de redirecionar
+            try {
+                updateStatusIndicator('checking', 'Verificando pagamento...');
+                const response = await fetch(`${BACKEND_URL}/api/payment/${currentPaymentId}`);
+                const data = await response.json();
+                
+                if (data.status === 'approved') {
+                    console.log('✅ PIX confirmado! Redirecionando...');
+                    isPaymentConfirmed = true;
+                    updateStatusIndicator('success', 'Aprovado!');
+                    redirectToResult();
+                } else {
+                    console.log('⚠️ PIX ainda não pago');
+                    showPixWarning();
+                }
+            } catch (error) {
+                console.error('❌ Erro ao verificar pagamento:', error);
+                showPixWarning();
+            }
+        }
+
+        // NOVO: Mostrar aviso de PIX não pago
+        function showPixWarning() {
+            const warningBox = document.getElementById('pixWarning');
+            const resultButton = document.getElementById('resultButton');
+            
+            warningBox.style.display = 'block';
+            resultButton.textContent = 'Verificar Pagamento Novamente';
+            
+            updateStatusIndicator('error', 'Pagamento pendente');
+            
+            // Esconder warning após 5 segundos
+            setTimeout(() => {
+                warningBox.style.display = 'none';
+                resultButton.textContent = 'Já paguei - Ver meu resultado';
+            }, 5000);
+        }
+
         // ============================================
-        // CORRIGIDO: DADOS DO USUÁRIO SEM EMAIL PRÉ-PREENCHIDO
+        // DADOS DO USUÁRIO CORRIGIDOS
         // ============================================
 
         function getEnhancedUserData() {
-            // CORRIGIDO: Dados sem email pré-preenchido
             const userData = {
                 firstName: 'Cliente',
                 lastName: 'Teste Prosperidade',
-                email: '', // ← CORRIGIDO: Email vazio para usuário preencher
+                email: '', // ← Email vazio para usuário preencher
                 phone: {
                     area_code: '11',
                     number: '999999999'
@@ -600,11 +692,9 @@
                     street_name: 'Rua da Prosperidade',
                     street_number: '123',
                     zip_code: '01234-567'
-                    // CORRIGIDO: Removido neighborhood, city, state (não existem na doc MP)
                 }
             };
 
-            // Adicionar dados de comportamento para anti-fraude
             userData.registration_date = new Date().toISOString();
             userData.is_prime_user = "0";
             userData.is_first_purchase_online = "1";
@@ -629,6 +719,7 @@
             const operationDate = document.getElementById('operationDate');
             const paymentId = document.getElementById('paymentId');
             const pixSection = document.getElementById('pixSection');
+            const pixWarning = document.getElementById('pixWarning');
 
             // Configurar data/hora atual
             const now = new Date();
@@ -654,7 +745,8 @@
                 checkoutSection.style.display = 'none';
                 
                 if (type === 'success') {
-                    stopPolling(); // Parar polling se estiver rodando
+                    stopPolling();
+                    isPaymentConfirmed = true; // NOVO: Marcar como confirmado
                     statusHeader.className = 'status-header success';
                     statusIcon.textContent = '✓';
                     statusTitle.textContent = 'Seu pagamento foi aprovado';
@@ -662,6 +754,7 @@
                     resultButton.textContent = 'Ver Resultado do Teste Agora';
                     countdownSection.style.display = 'block';
                     pixSection.style.display = 'none';
+                    pixWarning.style.display = 'none'; // NOVO: Esconder warning
                     
                     startCountdown();
                     
@@ -672,6 +765,7 @@
                     statusSubtitle.textContent = 'Escaneie o QR Code ou copie o código PIX para concluir seu pagamento.';
                     resultButton.textContent = 'Já paguei - Ver meu resultado';
                     countdownSection.style.display = 'none';
+                    pixWarning.style.display = 'none'; // NOVO: Esconder warning inicialmente
                     
                     // Mostrar informações do PIX
                     if (paymentData.qr_code_base64) {
@@ -687,7 +781,7 @@
                     
                     pixSection.style.display = 'block';
                     
-                    // NOVO: Iniciar polling para PIX
+                    // Iniciar polling para PIX
                     if (paymentData.id) {
                         startPolling(paymentData.id);
                     }
@@ -699,25 +793,30 @@
                     statusSubtitle.textContent = 'Aguarde enquanto confirmamos seu pagamento...';
                     countdownSection.style.display = 'none';
                     pixSection.style.display = 'none';
+                    pixWarning.style.display = 'none';
                     resultButton.textContent = 'Aguarde...';
                     resultButton.disabled = true;
                     
                 } else if (type === 'error') {
-                    stopPolling(); // Parar polling em caso de erro
+                    stopPolling();
                     statusHeader.className = 'status-header error';
                     statusIcon.textContent = '❌';
                     statusTitle.textContent = 'Erro no pagamento';
                     statusSubtitle.textContent = 'Não foi possível processar seu pagamento. Tente novamente com outro método de pagamento.';
                     countdownSection.style.display = 'none';
                     pixSection.style.display = 'none';
+                    pixWarning.style.display = 'none';
                     resultButton.textContent = 'Tentar Novamente';
                     resultButton.disabled = false;
                     resultButton.onclick = () => goBack();
                 }
 
-                // Configurar botão de resultado para casos de sucesso e PIX
-                if (type === 'success' || type === 'pix') {
+                // NOVO: Configurar botão com validação PIX
+                if (type === 'success') {
                     resultButton.onclick = () => redirectToResult();
+                    resultButton.disabled = false;
+                } else if (type === 'pix') {
+                    resultButton.onclick = () => validatePixBeforeRedirect(); // NOVO: Validar antes
                     resultButton.disabled = false;
                 }
 
@@ -750,7 +849,7 @@
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
             }
-            stopPolling(); // Parar polling antes de redirecionar
+            stopPolling();
             window.location.href = `https://www.suellenseragi.com.br/resultado?uid=${userUID}`;
         }
 
@@ -759,7 +858,8 @@
             const checkoutSection = document.getElementById('checkoutSection');
             const statusScreen = document.getElementById('statusScreen');
             
-            stopPolling(); // Parar polling ao voltar
+            stopPolling();
+            isPaymentConfirmed = false; // NOVO: Reset flag
             
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
@@ -799,7 +899,7 @@
 
         const renderPaymentBrick = async (bricksBuilder) => {
             try {
-                console.log('🚀 Criando Payment Brick com correções...');
+                console.log('🚀 Criando Payment Brick com validação PIX...');
                 
                 const userData = getEnhancedUserData();
                 
@@ -809,7 +909,7 @@
                         payer: {
                             firstName: userData.firstName,
                             lastName: userData.lastName,
-                            email: userData.email, // ← CORRIGIDO: Agora vazio
+                            email: userData.email,
                         },
                     },
                     customization: {
@@ -826,7 +926,7 @@
                     },
                     callbacks: {
                         onReady: () => {
-                            console.log('✅ Payment Brick carregado com correções');
+                            console.log('✅ Payment Brick carregado com validação PIX');
                             updateStatusIndicator('success', 'Carregado');
                             
                             const loadingElement = document.querySelector('.loading-state');
@@ -835,20 +935,18 @@
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('💳 Processando pagamento com campos corrigidos');
+                            console.log('💳 Processando pagamento com validação PIX');
                             console.log('📊 Dados do pagamento:', formData);
                             
                             showStatusScreen('processing');
                             updateStatusIndicator('checking', 'Processando...');
                             
                             return new Promise((resolve, reject) => {
-                                // CORRIGIDO: Dados com estrutura de endereço conforme doc MP
                                 const enhancedPaymentData = {
                                     ...formData,
                                     uid: userUID,
                                     description: 'Teste de Prosperidade - Resultado Personalizado',
                                     transaction_amount: 10,
-                                    // CORRIGIDO: additional_info com estrutura conforme doc oficial
                                     additional_info: {
                                         items: [
                                             {
@@ -865,12 +963,10 @@
                                             first_name: userData.firstName,
                                             last_name: userData.lastName,
                                             phone: userData.phone,
-                                            // CORRIGIDO: address structure conforme doc oficial (só 3 campos)
                                             address: {
                                                 street_name: userData.address.street_name,
                                                 street_number: userData.address.street_number,
                                                 zip_code: userData.address.zip_code
-                                                // REMOVIDO: city, neighborhood, state - não existem na doc oficial
                                             },
                                             registration_date: userData.registration_date,
                                             is_prime_user: userData.is_prime_user,
@@ -880,7 +976,7 @@
                                     }
                                 };
 
-                                console.log('📤 Enviando dados corrigidos:', enhancedPaymentData);
+                                console.log('📤 Enviando dados com validação PIX:', enhancedPaymentData);
 
                                 fetch(`${BACKEND_URL}/api/process_payment`, {
                                     method: 'POST',
@@ -900,15 +996,16 @@
                                     return response.json();
                                 })
                                 .then(result => {
-                                    console.log('✅ Resposta do backend corrigida:', result);
+                                    console.log('✅ Resposta do backend com validação PIX:', result);
                                     
                                     if (result.status === 'approved') {
                                         console.log('🎉 Pagamento APROVADO!');
+                                        isPaymentConfirmed = true; // NOVO: Marcar como confirmado
                                         updateStatusIndicator('success', 'Aprovado!');
                                         showStatusScreen('success', result);
                                         resolve();
                                     } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        console.log('💰 PIX criado com campos corrigidos');
+                                        console.log('💰 PIX criado com validação');
                                         updateStatusIndicator('checking', 'PIX criado');
                                         showStatusScreen('pix', result);
                                         resolve();
@@ -945,7 +1042,7 @@
                     settings
                 );
                 
-                console.log('✅ Payment Brick criado com todas as correções');
+                console.log('✅ Payment Brick criado com validação PIX');
                 
                 setTimeout(() => {
                     const loadingElement = document.querySelector('.loading-state');
@@ -971,19 +1068,18 @@
         };
 
         // ============================================
-        // INICIALIZAÇÃO DA APLICAÇÃO MELHORADA
+        // INICIALIZAÇÃO DA APLICAÇÃO
         // ============================================
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Inicializando checkout CORRIGIDO');
+            console.log('🚀 Inicializando checkout com validação PIX');
             console.log('🆔 UID:', userUID);
             console.log('🌐 Backend:', BACKEND_URL);
-            console.log('🔐 Ambiente: PRODUÇÃO com correções');
+            console.log('🔐 Ambiente: PRODUÇÃO com validação PIX');
             
-            // Verificar conectividade antes de inicializar
             testBackendConnection().then(isOnline => {
                 if (isOnline) {
-                    console.log('✅ Backend online - iniciando Payment Brick corrigido');
+                    console.log('✅ Backend online - iniciando Payment Brick com validação');
                     updateStatusIndicator('success', 'Conectado');
                     renderPaymentBrick(bricksBuilder);
                 } else {
@@ -1002,13 +1098,13 @@
             });
         });
 
-        // NOVO: Detectar quando usuário sai da página
+        // Detectar quando usuário sai da página
         window.addEventListener('beforeunload', () => {
             stopPolling();
         });
 
         // ============================================
-        // FUNÇÕES UTILITÁRIAS MELHORADAS
+        // FUNÇÕES UTILITÁRIAS
         // ============================================
 
         async function testBackendConnection() {
