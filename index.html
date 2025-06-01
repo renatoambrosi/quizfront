@@ -497,7 +497,7 @@
 
     <script>
         // ============================================
-        // 🔧 CONFIGURAÇÃO PARA PRODUÇÃO - MELHORADO
+        // 🔧 CONFIGURAÇÃO PARA PRODUÇÃO - CAMPOS CORRIGIDOS
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
@@ -579,15 +579,15 @@
         }
 
         // ============================================
-        // MELHORAR CAPTURA DE DADOS DO USUÁRIO
+        // CORRIGIDO: DADOS DO USUÁRIO SEM EMAIL PRÉ-PREENCHIDO
         // ============================================
 
         function getEnhancedUserData() {
-            // Tentar obter dados do usuário de várias fontes
+            // CORRIGIDO: Dados sem email pré-preenchido
             const userData = {
                 firstName: 'Cliente',
                 lastName: 'Teste Prosperidade',
-                email: 'teste@prosperidade.com',
+                email: '', // ← CORRIGIDO: Email vazio para usuário preencher
                 phone: {
                     area_code: '11',
                     number: '999999999'
@@ -599,10 +599,8 @@
                 address: {
                     street_name: 'Rua da Prosperidade',
                     street_number: '123',
-                    neighborhood: 'Centro',
-                    city: 'São Paulo',
-                    state: 'SP',
                     zip_code: '01234-567'
+                    // CORRIGIDO: Removido neighborhood, city, state (não existem na doc MP)
                 }
             };
 
@@ -796,12 +794,12 @@
         }
 
         // ============================================
-        // PAYMENT BRICK CONFIGURATION - MELHORADO
+        // PAYMENT BRICK CONFIGURATION - CORRIGIDO
         // ============================================
 
         const renderPaymentBrick = async (bricksBuilder) => {
             try {
-                console.log('🚀 Criando Payment Brick com melhorias...');
+                console.log('🚀 Criando Payment Brick com correções...');
                 
                 const userData = getEnhancedUserData();
                 
@@ -811,7 +809,7 @@
                         payer: {
                             firstName: userData.firstName,
                             lastName: userData.lastName,
-                            email: userData.email,
+                            email: userData.email, // ← CORRIGIDO: Agora vazio
                         },
                     },
                     customization: {
@@ -828,7 +826,7 @@
                     },
                     callbacks: {
                         onReady: () => {
-                            console.log('✅ Payment Brick carregado com melhorias');
+                            console.log('✅ Payment Brick carregado com correções');
                             updateStatusIndicator('success', 'Carregado');
                             
                             const loadingElement = document.querySelector('.loading-state');
@@ -837,20 +835,20 @@
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('💳 Processando pagamento com dados melhorados');
+                            console.log('💳 Processando pagamento com campos corrigidos');
                             console.log('📊 Dados do pagamento:', formData);
                             
                             showStatusScreen('processing');
                             updateStatusIndicator('checking', 'Processando...');
                             
                             return new Promise((resolve, reject) => {
-                                // Dados melhorados conforme documentação MP
+                                // CORRIGIDO: Dados com estrutura de endereço conforme doc MP
                                 const enhancedPaymentData = {
                                     ...formData,
                                     uid: userUID,
                                     description: 'Teste de Prosperidade - Resultado Personalizado',
                                     transaction_amount: 10,
-                                    // NOVO: Dados adiciais para anti-fraude
+                                    // CORRIGIDO: additional_info com estrutura conforme doc oficial
                                     additional_info: {
                                         items: [
                                             {
@@ -867,7 +865,13 @@
                                             first_name: userData.firstName,
                                             last_name: userData.lastName,
                                             phone: userData.phone,
-                                            address: userData.address,
+                                            // CORRIGIDO: address structure conforme doc oficial (só 3 campos)
+                                            address: {
+                                                street_name: userData.address.street_name,
+                                                street_number: userData.address.street_number,
+                                                zip_code: userData.address.zip_code
+                                                // REMOVIDO: city, neighborhood, state - não existem na doc oficial
+                                            },
                                             registration_date: userData.registration_date,
                                             is_prime_user: userData.is_prime_user,
                                             is_first_purchase_online: userData.is_first_purchase_online,
@@ -876,7 +880,7 @@
                                     }
                                 };
 
-                                console.log('📤 Enviando dados melhorados:', enhancedPaymentData);
+                                console.log('📤 Enviando dados corrigidos:', enhancedPaymentData);
 
                                 fetch(`${BACKEND_URL}/api/process_payment`, {
                                     method: 'POST',
@@ -896,7 +900,7 @@
                                     return response.json();
                                 })
                                 .then(result => {
-                                    console.log('✅ Resposta do backend melhorada:', result);
+                                    console.log('✅ Resposta do backend corrigida:', result);
                                     
                                     if (result.status === 'approved') {
                                         console.log('🎉 Pagamento APROVADO!');
@@ -904,7 +908,7 @@
                                         showStatusScreen('success', result);
                                         resolve();
                                     } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        console.log('💰 PIX criado com polling');
+                                        console.log('💰 PIX criado com campos corrigidos');
                                         updateStatusIndicator('checking', 'PIX criado');
                                         showStatusScreen('pix', result);
                                         resolve();
@@ -941,7 +945,7 @@
                     settings
                 );
                 
-                console.log('✅ Payment Brick criado com todas as melhorias');
+                console.log('✅ Payment Brick criado com todas as correções');
                 
                 setTimeout(() => {
                     const loadingElement = document.querySelector('.loading-state');
@@ -971,15 +975,15 @@
         // ============================================
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Inicializando checkout MELHORADO');
+            console.log('🚀 Inicializando checkout CORRIGIDO');
             console.log('🆔 UID:', userUID);
             console.log('🌐 Backend:', BACKEND_URL);
-            console.log('🔐 Ambiente: PRODUÇÃO com melhorias');
+            console.log('🔐 Ambiente: PRODUÇÃO com correções');
             
             // Verificar conectividade antes de inicializar
             testBackendConnection().then(isOnline => {
                 if (isOnline) {
-                    console.log('✅ Backend online - iniciando Payment Brick melhorado');
+                    console.log('✅ Backend online - iniciando Payment Brick corrigido');
                     updateStatusIndicator('success', 'Conectado');
                     renderPaymentBrick(bricksBuilder);
                 } else {
