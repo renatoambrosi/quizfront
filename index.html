@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Teste de Prosperidade</title>
     
-    <!-- 🔥 SDK MERCADOPAGO V2 - DECLARAÇÃO OFICIAL PARA COMPLIANCE (8 pontos) -->
-    <script src="https://sdk.mercadopago.com/js/v2" 
-            data-mp-version="2.0" 
-            data-mp-integration="checkout_bricks"
-            async></script>
+    <!-- 🔥 SDK MERCADOPAGO V2 - COMPLIANCE MÍNIMO (8 pontos) -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
             
     <style>
         * {
@@ -537,7 +534,7 @@
 
     <script>
         // ============================================
-        // 🔧 CONFIGURAÇÃO PARA PRODUÇÃO COM COMPLIANCE
+        // 🔧 CONFIGURAÇÃO CONSERVADORA PARA PRODUÇÃO
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
@@ -552,62 +549,22 @@
         console.log('🌐 Backend URL:', BACKEND_URL);
 
         // ============================================
-        // 🔥 INICIALIZAÇÃO MERCADOPAGO V2 - COMPLIANCE
+        // 🔥 INICIALIZAÇÃO CONSERVADORA MERCADOPAGO V2
         // ============================================
         
-        // CONFIGURAÇÃO EXPLÍCITA PARA MP DETECTAR
-        const MERCADOPAGO_CONFIG = {
-            public_key: PUBLIC_KEY,
+        // INICIALIZAÇÃO SIMPLES (sem metadata que pode causar problemas)
+        const mp = new MercadoPago(PUBLIC_KEY, {
             locale: 'pt',
-            sandbox: false,
-            // 🔥 METADATA PARA COMPLIANCE
-            integrator_id: 'dev_24c65fb163bf11ea96500242ac130004',
-            platform_id: 'custom',
-            corporation_id: null,
-            version: '2.0.0'
-        };
-
-        console.log('🧱 INICIALIZANDO MERCADOPAGO SDK V2 - COMPLIANCE MODE');
+            sandbox: false
+            // REMOVIDO: metadata extra que causava problemas SVG
+        });
         
-        // AGUARDAR CARREGAMENTO COMPLETO DO SDK
-        function initializeMercadoPago() {
-            if (typeof MercadoPago === 'undefined') {
-                console.log('⏳ Aguardando SDK MercadoPago...');
-                setTimeout(initializeMercadoPago, 100);
-                return;
-            }
-            
-            try {
-                // 🔥 INICIALIZAÇÃO EXPLÍCITA COM METADATA
-                window.mp = new MercadoPago(MERCADOPAGO_CONFIG.public_key, {
-                    locale: MERCADOPAGO_CONFIG.locale,
-                    sandbox: MERCADOPAGO_CONFIG.sandbox,
-                    // 🔥 METADATA PARA COMPLIANCE
-                    advancedFraudPrevention: true,
-                    trackingDisabled: false
-                });
-                
-                window.bricksBuilder = window.mp.bricks();
-                
-                console.log('✅ MercadoPago SDK V2 inicializado - COMPLIANCE OK');
-                console.log('🔍 SDK Info:', {
-                    version: MERCADOPAGO_CONFIG.version,
-                    integration: 'checkout_bricks',
-                    platform: 'custom',
-                    compliance: true
-                });
-                
-                // INICIALIZAR APLICAÇÃO
-                initializeApplication();
-                
-            } catch (error) {
-                console.error('❌ Erro inicialização MP SDK:', error);
-                updateStatusIndicator('error', 'Erro SDK');
-            }
-        }
+        const bricksBuilder = mp.bricks();
+        
+        console.log('🧱 INICIALIZANDO MERCADOPAGO SDK V2 - MODO CONSERVADOR');
 
         // ============================================
-        // SISTEMA DE POLLING MELHORADO PARA PIX
+        // SISTEMA DE POLLING PARA PIX
         // ============================================
         
         let pollingInterval = null;
@@ -926,12 +883,12 @@
         }
 
         // ============================================
-        // PAYMENT BRICK CONFIGURATION
+        // PAYMENT BRICK CONFIGURATION - CONSERVADOR
         // ============================================
 
         const renderPaymentBrick = async (bricksBuilder) => {
             try {
-                console.log('🚀 Criando Payment Brick com compliance...');
+                console.log('🚀 Criando Payment Brick modo conservador...');
                 
                 const userData = getEnhancedUserData();
                 
@@ -958,7 +915,7 @@
                     },
                     callbacks: {
                         onReady: () => {
-                            console.log('✅ Payment Brick carregado com compliance');
+                            console.log('✅ Payment Brick carregado - modo conservador');
                             updateStatusIndicator('success', 'Carregado');
                             
                             const loadingElement = document.querySelector('.loading-state');
@@ -967,7 +924,7 @@
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('💳 Processando pagamento com compliance');
+                            console.log('💳 Processando pagamento conservador');
                             console.log('📊 Dados do pagamento:', formData);
                             
                             showStatusScreen('processing');
@@ -1008,7 +965,7 @@
                                     }
                                 };
 
-                                console.log('📤 Enviando dados com compliance:', enhancedPaymentData);
+                                console.log('📤 Enviando dados conservador:', enhancedPaymentData);
 
                                 fetch(`${BACKEND_URL}/api/process_payment`, {
                                     method: 'POST',
@@ -1028,7 +985,7 @@
                                     return response.json();
                                 })
                                 .then(result => {
-                                    console.log('✅ Resposta do backend com compliance:', result);
+                                    console.log('✅ Resposta do backend conservador:', result);
                                     
                                     if (result.status === 'approved') {
                                         console.log('🎉 Pagamento APROVADO!');
@@ -1037,7 +994,7 @@
                                         showStatusScreen('success', result);
                                         resolve();
                                     } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        console.log('💰 PIX criado com compliance');
+                                        console.log('💰 PIX criado conservador');
                                         updateStatusIndicator('checking', 'PIX criado');
                                         showStatusScreen('pix', result);
                                         resolve();
@@ -1074,14 +1031,7 @@
                     settings
                 );
                 
-                console.log('✅ Payment Brick criado com compliance');
-                
-                setTimeout(() => {
-                    const loadingElement = document.querySelector('.loading-state');
-                    if (loadingElement) {
-                        loadingElement.style.display = 'none';
-                    }
-                }, 2000);
+                console.log('✅ Payment Brick criado conservador');
                 
             } catch (error) {
                 console.error('❌ Erro ao criar Payment Brick:', error);
@@ -1103,17 +1053,17 @@
         // INICIALIZAÇÃO DA APLICAÇÃO
         // ============================================
 
-        function initializeApplication() {
-            console.log('🚀 Inicializando aplicação com compliance');
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Inicializando checkout conservador');
             console.log('🆔 UID:', userUID);
             console.log('🌐 Backend:', BACKEND_URL);
-            console.log('🔐 Ambiente: PRODUÇÃO com compliance');
+            console.log('🔐 Ambiente: PRODUÇÃO conservador');
             
             testBackendConnection().then(isOnline => {
                 if (isOnline) {
-                    console.log('✅ Backend online - iniciando Payment Brick');
+                    console.log('✅ Backend online - iniciando Payment Brick conservador');
                     updateStatusIndicator('success', 'Conectado');
-                    renderPaymentBrick(window.bricksBuilder);
+                    renderPaymentBrick(bricksBuilder);
                 } else {
                     console.error('❌ Backend offline');
                     updateStatusIndicator('error', 'Offline');
@@ -1128,31 +1078,11 @@
                     `;
                 }
             });
-        }
-
-        // Aguardar carregamento do DOM
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeMercadoPago);
-        } else {
-            initializeMercadoPago();
-        }
+        });
 
         // Detectar quando usuário sai da página
         window.addEventListener('beforeunload', () => {
             stopPolling();
-        });
-
-        // ============================================
-        // 📊 LOGS PARA DEBUGGING COMPLIANCE
-        // ============================================
-        
-        window.addEventListener('load', () => {
-            console.log('📊 COMPLIANCE CHECK:');
-            console.log('✅ SDK MercadoPago V2:', typeof MercadoPago !== 'undefined');
-            console.log('✅ Bricks Builder:', typeof window.bricksBuilder !== 'undefined');
-            console.log('✅ Public Key:', MERCADOPAGO_CONFIG.public_key.substring(0, 20) + '...');
-            console.log('✅ Integração:', 'checkout_bricks');
-            console.log('✅ Versão:', MERCADOPAGO_CONFIG.version);
         });
 
         async function testBackendConnection() {
@@ -1171,6 +1101,18 @@
                 return false;
             }
         }
+        
+        // ============================================
+        // 📊 LOGS COMPLIANCE CONSERVADOR
+        // ============================================
+        
+        window.addEventListener('load', () => {
+            console.log('📊 COMPLIANCE CHECK CONSERVADOR:');
+            console.log('✅ SDK MercadoPago V2:', typeof MercadoPago !== 'undefined');
+            console.log('✅ Bricks Builder:', typeof bricksBuilder !== 'undefined');
+            console.log('✅ Public Key:', PUBLIC_KEY.substring(0, 20) + '...');
+            console.log('✅ Modo: Conservador para evitar erros SVG');
+        });
     </script>
 </body>
 </html>
