@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Teste de Prosperidade</title>
-    
-    <!-- 🔥 SDK MERCADOPAGO V2 - COMPLIANCE MÍNIMO (8 pontos) -->
     <script src="https://sdk.mercadopago.com/js/v2"></script>
-            
     <style>
         * {
             margin: 0;
@@ -100,26 +97,26 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Status Screen Styles */
+        /* Status Screen Styles - ADICIONANDO SCROLL */
         .status-screen {
             display: none;
             background: #f5f5f5;
             min-height: 100vh;
-            max-height: 100vh;
+            max-height: 100vh; /* NOVO: Limitar altura */
             width: 100%;
             position: fixed;
             top: 0;
             left: 0;
             z-index: 1000;
             padding: 20px;
-            overflow-y: auto;
+            overflow-y: auto; /* NOVO: Scroll vertical */
         }
 
         .status-container {
             max-width: 600px;
             margin: 0 auto;
             padding-top: 40px;
-            min-height: calc(100vh - 40px);
+            min-height: calc(100vh - 40px); /* NOVO: Garantir altura mínima */
         }
 
         .status-header {
@@ -169,8 +166,8 @@
             padding: 60px 40px 40px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             position: relative;
-            max-height: none;
-            overflow-y: auto;
+            max-height: none; /* NOVO: Permitir crescimento */
+            overflow-y: auto; /* NOVO: Scroll interno se necessário */
         }
 
         .status-title {
@@ -300,8 +297,8 @@
             border-radius: 8px;
             padding: 16px;
             margin-top: 20px;
-            max-height: none;
-            overflow-y: auto;
+            max-height: none; /* NOVO: Permitir crescimento */
+            overflow-y: auto; /* NOVO: Scroll interno */
         }
 
         .pix-qr {
@@ -340,6 +337,7 @@
             background: #389e0d;
         }
 
+        /* NOVO: Status de atualização em tempo real */
         .status-indicator {
             position: fixed;
             top: 20px;
@@ -361,6 +359,7 @@
             background: #ff4d4f;
         }
 
+        /* NOVO: Warning de pagamento não confirmado */
         .warning-box {
             background: #fff2e8;
             border: 1px solid #ffbb96;
@@ -398,7 +397,7 @@
             
             .status-container {
                 padding-top: 20px;
-                min-height: calc(100vh - 20px);
+                min-height: calc(100vh - 20px); /* NOVO: Ajustar para mobile */
             }
             
             .status-content {
@@ -424,12 +423,13 @@
                 text-align: center;
             }
 
+            /* NOVO: Scroll otimizado para mobile */
             .status-screen {
                 padding: 10px;
             }
             
             .pix-info {
-                max-height: 40vh;
+                max-height: 40vh; /* NOVO: Limitar altura no mobile */
             }
         }
 
@@ -445,7 +445,7 @@
     </style>
 </head>
 <body>
-    <!-- Indicador de Status -->
+    <!-- Indicador de Status (NOVO) -->
     <div id="statusIndicator" class="status-indicator">
         ● Conectado
     </div>
@@ -499,13 +499,14 @@
                     </div>
                 </div>
 
+                <!-- NOVO: Warning para PIX não pago -->
                 <div id="pixWarning" class="warning-box" style="display: none;">
                     <div class="warning-icon">⚠️</div>
                     <div class="warning-text">Pagamento não confirmado</div>
                     <div class="warning-subtext">Verificando automaticamente a cada 3 segundos. Aguarde ou efetue o pagamento PIX.</div>
                 </div>
 
-                <!-- Seção PIX -->
+                <!-- Seção PIX (apenas para PIX) -->
                 <div id="pixSection" class="pix-info" style="display: none;">
                     <h3>Pagamento PIX</h3>
                     <div class="pix-qr">
@@ -534,7 +535,7 @@
 
     <script>
         // ============================================
-        // 🔧 CONFIGURAÇÃO CONSERVADORA PARA PRODUÇÃO
+        // 🔧 CONFIGURAÇÃO PARA PRODUÇÃO - CAMPOS CORRIGIDOS
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
@@ -548,32 +549,26 @@
         console.log('🔑 Public Key (PRODUÇÃO):', PUBLIC_KEY);
         console.log('🌐 Backend URL:', BACKEND_URL);
 
-        // ============================================
-        // 🔥 INICIALIZAÇÃO CONSERVADORA MERCADOPAGO V2
-        // ============================================
-        
-        // INICIALIZAÇÃO SIMPLES (sem metadata que pode causar problemas)
-        const mp = new MercadoPago(PUBLIC_KEY, {
+        // INICIALIZAR MERCADO PAGO
+        const mp = new MercadoPago(PUBLIC_KEY, { 
             locale: 'pt',
             sandbox: false
-            // REMOVIDO: metadata extra que causava problemas SVG
         });
-        
         const bricksBuilder = mp.bricks();
-        
-        console.log('🧱 INICIALIZANDO MERCADOPAGO SDK V2 - MODO CONSERVADOR');
+
+        console.log('🚀 Iniciando Mercado Pago em modo PRODUÇÃO');
 
         // ============================================
-        // SISTEMA DE POLLING PARA PIX
+        // NOVO: SISTEMA DE POLLING MELHORADO PARA PIX
         // ============================================
         
         let pollingInterval = null;
         let currentPaymentId = null;
-        let isPaymentConfirmed = false;
+        let isPaymentConfirmed = false; // NOVO: Flag para controlar se pagamento foi confirmado
 
         function startPolling(paymentId) {
             currentPaymentId = paymentId;
-            isPaymentConfirmed = false;
+            isPaymentConfirmed = false; // Reset da flag
             console.log('🔄 Iniciando polling para payment:', paymentId);
             
             updateStatusIndicator('checking', 'Verificando...');
@@ -587,7 +582,7 @@
                     
                     if (data.status === 'approved') {
                         console.log('✅ PIX APROVADO via polling!');
-                        isPaymentConfirmed = true;
+                        isPaymentConfirmed = true; // NOVO: Marcar como confirmado
                         stopPolling();
                         updateStatusIndicator('success', 'Aprovado!');
                         showStatusScreen('success', data);
@@ -600,7 +595,7 @@
                 } catch (error) {
                     console.error('❌ Erro no polling:', error);
                 }
-            }, 3000);
+            }, 3000); // Verificar a cada 3 segundos
         }
 
         function stopPolling() {
@@ -624,18 +619,21 @@
             }
         }
 
-        // Função para validar PIX antes de redirecionar
+        // NOVO: Função para validar PIX antes de redirecionar
         async function validatePixBeforeRedirect() {
             if (isPaymentConfirmed) {
+                // Pagamento já confirmado, pode redirecionar
                 redirectToResult();
                 return;
             }
 
             if (!currentPaymentId) {
+                // Não há PIX para verificar, redirecionar direto (caso cartão)
                 redirectToResult();
                 return;
             }
 
+            // Verificar se PIX foi pago antes de redirecionar
             try {
                 updateStatusIndicator('checking', 'Verificando pagamento...');
                 const response = await fetch(`${BACKEND_URL}/api/payment/${currentPaymentId}`);
@@ -656,6 +654,7 @@
             }
         }
 
+        // NOVO: Mostrar aviso de PIX não pago
         function showPixWarning() {
             const warningBox = document.getElementById('pixWarning');
             const resultButton = document.getElementById('resultButton');
@@ -665,6 +664,7 @@
             
             updateStatusIndicator('error', 'Pagamento pendente');
             
+            // Esconder warning após 5 segundos
             setTimeout(() => {
                 warningBox.style.display = 'none';
                 resultButton.textContent = 'Já paguei - Ver meu resultado';
@@ -672,14 +672,14 @@
         }
 
         // ============================================
-        // DADOS DO USUÁRIO
+        // DADOS DO USUÁRIO CORRIGIDOS
         // ============================================
 
         function getEnhancedUserData() {
             const userData = {
                 firstName: 'Cliente',
                 lastName: 'Teste Prosperidade',
-                email: '',
+                email: '', // ← Email vazio para usuário preencher
                 phone: {
                     area_code: '11',
                     number: '999999999'
@@ -704,7 +704,7 @@
         }
 
         // ============================================
-        // FUNÇÕES DE STATUS SCREEN
+        // FUNÇÕES DE STATUS SCREEN MELHORADAS
         // ============================================
 
         function showStatusScreen(type = 'success', paymentData = {}) {
@@ -721,6 +721,7 @@
             const pixSection = document.getElementById('pixSection');
             const pixWarning = document.getElementById('pixWarning');
 
+            // Configurar data/hora atual
             const now = new Date();
             const dateStr = now.toLocaleDateString('pt-BR', { 
                 day: 'numeric', 
@@ -731,10 +732,12 @@
             }) + ' h.';
             operationDate.textContent = dateStr;
 
+            // Configurar ID do pagamento
             if (paymentData.id) {
                 paymentId.textContent = paymentData.id;
             }
 
+            // Ocultar checkout com transição
             checkoutSection.style.transition = 'all 0.3s ease';
             checkoutSection.classList.add('fade-out');
 
@@ -743,7 +746,7 @@
                 
                 if (type === 'success') {
                     stopPolling();
-                    isPaymentConfirmed = true;
+                    isPaymentConfirmed = true; // NOVO: Marcar como confirmado
                     statusHeader.className = 'status-header success';
                     statusIcon.textContent = '✓';
                     statusTitle.textContent = 'Seu pagamento foi aprovado';
@@ -751,7 +754,7 @@
                     resultButton.textContent = 'Ver Resultado do Teste Agora';
                     countdownSection.style.display = 'block';
                     pixSection.style.display = 'none';
-                    pixWarning.style.display = 'none';
+                    pixWarning.style.display = 'none'; // NOVO: Esconder warning
                     
                     startCountdown();
                     
@@ -762,8 +765,9 @@
                     statusSubtitle.textContent = 'Escaneie o QR Code ou copie o código PIX para concluir seu pagamento.';
                     resultButton.textContent = 'Já paguei - Ver meu resultado';
                     countdownSection.style.display = 'none';
-                    pixWarning.style.display = 'none';
+                    pixWarning.style.display = 'none'; // NOVO: Esconder warning inicialmente
                     
+                    // Mostrar informações do PIX
                     if (paymentData.qr_code_base64) {
                         const qrImg = document.getElementById('pixQRCode');
                         qrImg.src = `data:image/png;base64,${paymentData.qr_code_base64}`;
@@ -777,6 +781,7 @@
                     
                     pixSection.style.display = 'block';
                     
+                    // Iniciar polling para PIX
                     if (paymentData.id) {
                         startPolling(paymentData.id);
                     }
@@ -806,19 +811,22 @@
                     resultButton.onclick = () => goBack();
                 }
 
+                // NOVO: Configurar botão com validação PIX
                 if (type === 'success') {
                     resultButton.onclick = () => redirectToResult();
                     resultButton.disabled = false;
                 } else if (type === 'pix') {
-                    resultButton.onclick = () => validatePixBeforeRedirect();
+                    resultButton.onclick = () => validatePixBeforeRedirect(); // NOVO: Validar antes
                     resultButton.disabled = false;
                 }
 
+                // Mostrar tela de status
                 statusScreen.style.display = 'block';
                 statusScreen.classList.add('fade-in');
             }, 300);
         }
 
+        // Função de countdown
         function startCountdown() {
             let seconds = 10;
             const timer = document.getElementById('countdownTimer');
@@ -836,6 +844,7 @@
             window.countdownInterval = interval;
         }
 
+        // Função para redirecionar ao resultado
         function redirectToResult() {
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
@@ -844,12 +853,13 @@
             window.location.href = `https://www.suellenseragi.com.br/resultado?uid=${userUID}`;
         }
 
+        // Função para voltar
         function goBack() {
             const checkoutSection = document.getElementById('checkoutSection');
             const statusScreen = document.getElementById('statusScreen');
             
             stopPolling();
-            isPaymentConfirmed = false;
+            isPaymentConfirmed = false; // NOVO: Reset flag
             
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
@@ -866,6 +876,7 @@
             updateStatusIndicator('success', 'Reconectado');
         }
 
+        // Função para copiar código PIX
         function copyPixCode() {
             if (window.pixCodeToCopy) {
                 navigator.clipboard.writeText(window.pixCodeToCopy).then(() => {
@@ -883,12 +894,12 @@
         }
 
         // ============================================
-        // PAYMENT BRICK CONFIGURATION - CONSERVADOR
+        // PAYMENT BRICK CONFIGURATION - CORRIGIDO
         // ============================================
 
         const renderPaymentBrick = async (bricksBuilder) => {
             try {
-                console.log('🚀 Criando Payment Brick modo conservador...');
+                console.log('🚀 Criando Payment Brick com validação PIX...');
                 
                 const userData = getEnhancedUserData();
                 
@@ -915,7 +926,7 @@
                     },
                     callbacks: {
                         onReady: () => {
-                            console.log('✅ Payment Brick carregado - modo conservador');
+                            console.log('✅ Payment Brick carregado com validação PIX');
                             updateStatusIndicator('success', 'Carregado');
                             
                             const loadingElement = document.querySelector('.loading-state');
@@ -924,7 +935,7 @@
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('💳 Processando pagamento conservador');
+                            console.log('💳 Processando pagamento com validação PIX');
                             console.log('📊 Dados do pagamento:', formData);
                             
                             showStatusScreen('processing');
@@ -965,7 +976,7 @@
                                     }
                                 };
 
-                                console.log('📤 Enviando dados conservador:', enhancedPaymentData);
+                                console.log('📤 Enviando dados com validação PIX:', enhancedPaymentData);
 
                                 fetch(`${BACKEND_URL}/api/process_payment`, {
                                     method: 'POST',
@@ -985,16 +996,16 @@
                                     return response.json();
                                 })
                                 .then(result => {
-                                    console.log('✅ Resposta do backend conservador:', result);
+                                    console.log('✅ Resposta do backend com validação PIX:', result);
                                     
                                     if (result.status === 'approved') {
                                         console.log('🎉 Pagamento APROVADO!');
-                                        isPaymentConfirmed = true;
+                                        isPaymentConfirmed = true; // NOVO: Marcar como confirmado
                                         updateStatusIndicator('success', 'Aprovado!');
                                         showStatusScreen('success', result);
                                         resolve();
                                     } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        console.log('💰 PIX criado conservador');
+                                        console.log('💰 PIX criado com validação');
                                         updateStatusIndicator('checking', 'PIX criado');
                                         showStatusScreen('pix', result);
                                         resolve();
@@ -1031,7 +1042,14 @@
                     settings
                 );
                 
-                console.log('✅ Payment Brick criado conservador');
+                console.log('✅ Payment Brick criado com validação PIX');
+                
+                setTimeout(() => {
+                    const loadingElement = document.querySelector('.loading-state');
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                }, 2000);
                 
             } catch (error) {
                 console.error('❌ Erro ao criar Payment Brick:', error);
@@ -1054,14 +1072,14 @@
         // ============================================
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Inicializando checkout conservador');
+            console.log('🚀 Inicializando checkout com validação PIX');
             console.log('🆔 UID:', userUID);
             console.log('🌐 Backend:', BACKEND_URL);
-            console.log('🔐 Ambiente: PRODUÇÃO conservador');
+            console.log('🔐 Ambiente: PRODUÇÃO com validação PIX');
             
             testBackendConnection().then(isOnline => {
                 if (isOnline) {
-                    console.log('✅ Backend online - iniciando Payment Brick conservador');
+                    console.log('✅ Backend online - iniciando Payment Brick com validação');
                     updateStatusIndicator('success', 'Conectado');
                     renderPaymentBrick(bricksBuilder);
                 } else {
@@ -1085,6 +1103,10 @@
             stopPolling();
         });
 
+        // ============================================
+        // FUNÇÕES UTILITÁRIAS
+        // ============================================
+
         async function testBackendConnection() {
             try {
                 const response = await fetch(`${BACKEND_URL}/health`, {
@@ -1101,18 +1123,6 @@
                 return false;
             }
         }
-        
-        // ============================================
-        // 📊 LOGS COMPLIANCE CONSERVADOR
-        // ============================================
-        
-        window.addEventListener('load', () => {
-            console.log('📊 COMPLIANCE CHECK CONSERVADOR:');
-            console.log('✅ SDK MercadoPago V2:', typeof MercadoPago !== 'undefined');
-            console.log('✅ Bricks Builder:', typeof bricksBuilder !== 'undefined');
-            console.log('✅ Public Key:', PUBLIC_KEY.substring(0, 20) + '...');
-            console.log('✅ Modo: Conservador para evitar erros SVG');
-        });
     </script>
 </body>
 </html>
