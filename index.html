@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -68,16 +69,47 @@
         }
 
         .mp-logo-footer {
-            padding: 0 0px 0px;
+            padding: 20px 32px 24px;
             text-align: center;
             background: white;
             border-top: 1px solid #f0f0f0;
         }
 
-        .mp-logo-img {
-            height: 200px;
-            margin-bottom: 2px;
-            opacity: 0.9;
+        .mp-logo-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .mp-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #009ee3, #0099d9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -1px;
+        }
+
+        .mp-logo-text {
+            font-size: 24px;
+            font-weight: 600;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1;
+        }
+
+        .mp-mercado {
+            color: #009ee3;
+        }
+
+        .mp-pago {
+            color: #2d3277;
         }
 
         .mp-security-text {
@@ -415,12 +447,22 @@
             }
 
             .mp-logo-footer {
-                padding: 0px 0px 0px;
+                padding: 16px 24px 20px;
             }
 
-            .mp-logo-img {
-                height: 160px;
-                margin-bottom: 2px;
+            .mp-logo-wrapper {
+                gap: 6px;
+                margin-bottom: 6px;
+            }
+
+            .mp-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 10px;
+            }
+
+            .mp-logo-text {
+                font-size: 20px;
             }
             
             .status-container {
@@ -500,9 +542,12 @@
 
         <!-- Logo Mercado Pago - Posicionada abaixo do botão Pagar -->
         <div class="mp-logo-footer">
-            <img src="https://quizfront.vercel.app/mercado_pago-logo.png" 
-                 alt="Mercado Pago" 
-                 class="mp-logo-img">
+            <div class="mp-logo-wrapper">
+                <div class="mp-icon">MP</div>
+                <div class="mp-logo-text">
+                    <span class="mp-mercado">mercado</span><span class="mp-pago">pago</span>
+                </div>
+            </div>
             <div class="mp-security-text">Pagamento 100% seguro</div>
         </div>
     </div>
