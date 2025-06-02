@@ -109,7 +109,7 @@
             left: 0;
             z-index: 1000;
             padding: 20px;
-            overflow-y: auto; /* GARANTIR SCROLL CONFORME NECESSÁRIO */
+            overflow-y: auto;
         }
 
         .status-container {
@@ -408,6 +408,37 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        .error-container {
+            padding: 40px 20px;
+            text-align: center;
+            color: #666;
+        }
+
+        .error-title {
+            font-size: 18px;
+            color: #ff4d4f;
+            margin-bottom: 12px;
+        }
+
+        .error-message {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .retry-button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .retry-button:hover {
+            background: #40a9ff;
+        }
     </style>
 </head>
 <body>
@@ -461,7 +492,7 @@
                     </div>
                 </div>
 
-                <!-- Info de Rejeição (nova) -->
+                <!-- Info de Rejeição -->
                 <div id="rejectionInfo" class="rejection-info" style="display: none;">
                     <div class="rejection-reason">Pagamento rejeitado pelo banco emissor</div>
                     <div class="rejection-suggestion">
@@ -470,7 +501,7 @@
                     </div>
                 </div>
 
-                <!-- Seção PIX (apenas para PIX) -->
+                <!-- Seção PIX -->
                 <div id="pixSection" class="pix-info" style="display: none;">
                     <h3>Pagamento PIX</h3>
                     <div class="pix-qr">
@@ -499,10 +530,11 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
+        // CONFIGURAÇÕES CONFORME DOCUMENTAÇÃO OFICIAL MP
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
+        // PUBLIC KEY EXATA conforme documentação (verificar se é válida)
         const PUBLIC_KEY = 'TEST-d1dd4fcc-3ec9-4935-88e2-8784c22f4626';
         
         // Obter UID da URL ou gerar um para teste
@@ -510,24 +542,44 @@
         const userUID = urlParams.get('uid') || `test-${Date.now()}`;
         
         console.log('🆔 UID do usuário:', userUID);
+        console.log('🔑 Public Key:', PUBLIC_KEY);
 
         // ============================================
-        // INICIALIZAÇÃO SDK V2 OFICIAL CONFORME DOC MP
+        // INICIALIZAÇÃO SDK V2 EXATA CONFORME DOCUMENTAÇÃO OFICIAL MP
         // ============================================
         
         console.log('🔧 Inicializando SDK MercadoPago V2 oficial');
         
-        // CONFORME DOCUMENTAÇÃO OFICIAL MP - Doc Frontend.txt
-        const mp = new MercadoPago(PUBLIC_KEY, {
-            locale: 'pt'
-        });
-        const bricksBuilder = mp.bricks();
-
-        console.log('✅ SDK V2 inicializado conforme documentação oficial');
+        let mp, bricksBuilder;
+        
+        try {
+            // CONFIGURAÇÃO EXATA conforme DOC Frontend.txt
+            mp = new MercadoPago(PUBLIC_KEY, {
+                locale: 'pt'
+            });
+            bricksBuilder = mp.bricks();
+            
+            console.log('✅ SDK V2 inicializado com sucesso');
+        } catch (error) {
+            console.error('❌ Erro ao inicializar SDK:', error);
+            showErrorScreen('Erro ao carregar SDK do Mercado Pago');
+        }
 
         // ============================================
-        // FUNÇÕES DE STATUS SCREEN MELHORADAS
+        // FUNÇÕES DE STATUS SCREEN
         // ============================================
+
+        function showErrorScreen(message) {
+            document.getElementById('paymentBrick_container').innerHTML = `
+                <div class="error-container">
+                    <div class="error-title">Erro no Checkout</div>
+                    <div class="error-message">${message}</div>
+                    <button class="retry-button" onclick="location.reload()">
+                        Tentar Novamente
+                    </button>
+                </div>
+            `;
+        }
 
         function showStatusScreen(type = 'success', paymentData = {}) {
             const checkoutSection = document.getElementById('checkoutSection');
@@ -581,7 +633,6 @@
                     startCountdown();
                     
                 } else if (type === 'rejected') {
-                    // NOVO: Tratamento para pagamentos rejeitados
                     statusHeader.className = 'status-header rejected';
                     statusIcon.textContent = '⚠️';
                     statusTitle.textContent = 'Pagamento rejeitado';
@@ -651,7 +702,7 @@
             }, 300);
         }
 
-        // NOVO: Polling para PIX conforme necessário para merchant_order
+        // Polling para PIX
         function startPixPolling(paymentId) {
             console.log('🔄 Iniciando polling para PIX:', paymentId);
             
@@ -669,7 +720,7 @@
                 } catch (error) {
                     console.error('❌ Erro no polling PIX:', error);
                 }
-            }, 3000); // Verificar a cada 3 segundos
+            }, 3000);
             
             // Parar polling após 10 minutos
             setTimeout(() => {
@@ -693,7 +744,6 @@
                 }
             }, 1000);
 
-            // Salvar interval para poder cancelar se usuário clicar no botão
             window.countdownInterval = interval;
         }
 
@@ -702,7 +752,6 @@
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
             }
-            // Redirecionar para página de resultado com UID
             window.location.href = `https://www.suellenseragi.com.br/resultado?uid=${userUID}`;
         }
 
@@ -729,7 +778,7 @@
             // Recriar brick para nova tentativa
             setTimeout(() => {
                 console.log('🔄 Recriando Payment Brick para nova tentativa');
-                renderPaymentBrick(bricksBuilder);
+                renderPaymentBrick();
             }, 500);
         }
 
@@ -756,19 +805,21 @@
         };
 
         // ============================================
-        // PAYMENT BRICK - CONFIGURAÇÃO OFICIAL MP
+        // PAYMENT BRICK - CONFIGURAÇÃO EXATA DOC OFICIAL MP
         // ============================================
 
-        const renderPaymentBrick = async (bricksBuilder) => {
+        const renderPaymentBrick = async () => {
             try {
-                console.log('🧱 Renderizando Payment Brick - Configuração Oficial MP');
+                console.log('🧱 Renderizando Payment Brick - Configuração EXATA Doc Oficial MP');
                 
-                // CONFIGURAÇÃO CONFORME DOCUMENTAÇÃO OFICIAL - Doc Frontend.txt e DOC JAVASCRIPT.txt
+                if (!bricksBuilder) {
+                    throw new Error('SDK não inicializado corretamente');
+                }
+                
+                // CONFIGURAÇÃO EXATA conforme DOC Frontend.txt
                 const settings = {
                     initialization: {
-                        // Valor conforme documentação
-                        amount: 10,
-                        // Dados do payer conforme doc oficial
+                        amount: 10, // Valor fixo conforme documentação
                         payer: {
                             firstName: "",
                             lastName: "",
@@ -782,9 +833,8 @@
                             },
                         },
                         paymentMethods: {
-                            // Configuração conforme Doc Frontend.txt
                             creditCard: "all",
-                            bankTransfer: "all",
+                            bankTransfer: "all", // PIX
                             maxInstallments: 1
                         },
                     },
@@ -806,7 +856,7 @@
                             showStatusScreen('processing');
                             
                             return new Promise((resolve, reject) => {
-                                // Adicionar UID aos dados conforme necessário
+                                // Adicionar UID aos dados
                                 const paymentData = {
                                     ...formData,
                                     uid: userUID,
@@ -832,24 +882,19 @@
                                     console.log('✅ Resposta do backend:', result);
                                     
                                     if (result.status === 'approved') {
-                                        // Pagamento aprovado
                                         showStatusScreen('success', result);
                                         resolve();
                                     } else if (result.status === 'rejected') {
-                                        // Pagamento rejeitado - permitir nova tentativa
                                         console.log('⚠️ Pagamento rejeitado:', result.status_detail);
                                         showStatusScreen('rejected', result);
                                         resolve(); // Resolver para não quebrar o fluxo
                                     } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        // PIX criado - mostrar QR Code
                                         showStatusScreen('pix', result);
                                         resolve();
                                     } else if (result.status === 'pending') {
-                                        // Outros casos pendentes
                                         showStatusScreen('processing', result);
                                         resolve();
                                     } else {
-                                        // Erro ou outro status
                                         showStatusScreen('error', result);
                                         reject();
                                     }
@@ -863,7 +908,7 @@
                         },
                         onError: (error) => {
                             console.error('❌ Erro Payment Brick:', error);
-                            console.log('🔍 Detalhes do erro:', JSON.stringify(error, null, 2));
+                            showErrorScreen('Erro ao carregar formulário de pagamento');
                         },
                     },
                 };
@@ -875,28 +920,11 @@
                     settings
                 );
                 
-                console.log('✅ Payment Brick criado com sucesso - SDK V2 implementado');
-                
-                // Garantir que o loading seja removido
-                setTimeout(() => {
-                    const loadingElement = document.querySelector('.loading-state');
-                    if (loadingElement) {
-                        loadingElement.style.display = 'none';
-                    }
-                }, 2000);
+                console.log('✅ Payment Brick criado com sucesso');
                 
             } catch (error) {
                 console.error('❌ Erro ao criar Payment Brick:', error);
-                
-                document.getElementById('paymentBrick_container').innerHTML = `
-                    <div class="loading-state">
-                        <p style="color: #ff4d4f;">Erro ao carregar pagamentos</p>
-                        <p style="font-size: 14px; color: #666;">Recarregue a página para tentar novamente</p>
-                        <button onclick="location.reload()" style="margin-top: 12px; padding: 8px 16px; background: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                            Recarregar Página
-                        </button>
-                    </div>
-                `;
+                showErrorScreen('Erro ao carregar formas de pagamento');
             }
         };
 
@@ -909,12 +937,11 @@
             console.log('🆔 UID do usuário:', userUID);
             console.log('🌐 Backend URL:', BACKEND_URL);
             
-            renderPaymentBrick(bricksBuilder);
+            // Aguardar um pouco para garantir que o SDK carregou
+            setTimeout(() => {
+                renderPaymentBrick();
+            }, 1000);
         });
-
-        // ============================================
-        // FUNÇÕES UTILITÁRIAS
-        // ============================================
 
         // Função para testar conexão com backend
         async function testBackendConnection() {
