@@ -68,47 +68,16 @@
         }
 
         .mp-logo-footer {
-            padding: 20px 32px 24px;
+            padding: 8px 32px 16px;
             text-align: center;
             background: white;
             border-top: 1px solid #f0f0f0;
         }
 
-        .mp-logo-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .mp-icon {
-            width: 32px;
+        .mp-logo-img {
             height: 32px;
-            background: linear-gradient(135deg, #009ee3, #0099d9);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 700;
-            color: white;
-            letter-spacing: -1px;
-        }
-
-        .mp-logo-text {
-            font-size: 24px;
-            font-weight: 600;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1;
-        }
-
-        .mp-mercado {
-            color: #009ee3;
-        }
-
-        .mp-pago {
-            color: #2d3277;
+            margin-bottom: 8px;
+            opacity: 0.9;
         }
 
         .mp-security-text {
@@ -446,22 +415,12 @@
             }
 
             .mp-logo-footer {
-                padding: 16px 24px 20px;
+                padding: 6px 24px 14px;
             }
 
-            .mp-logo-wrapper {
-                gap: 6px;
-                margin-bottom: 6px;
-            }
-
-            .mp-icon {
-                width: 28px;
+            .mp-logo-img {
                 height: 28px;
-                font-size: 10px;
-            }
-
-            .mp-logo-text {
-                font-size: 20px;
+                margin-bottom: 6px;
             }
             
             .status-container {
@@ -541,12 +500,9 @@
 
         <!-- Logo Mercado Pago - Posicionada abaixo do botão Pagar -->
         <div class="mp-logo-footer">
-            <div class="mp-logo-wrapper">
-                <div class="mp-icon">MP</div>
-                <div class="mp-logo-text">
-                    <span class="mp-mercado">mercado</span><span class="mp-pago">pago</span>
-                </div>
-            </div>
+            <img src="https://quizfront.vercel.app/mercado_pago-logo.png" 
+                 alt="Mercado Pago" 
+                 class="mp-logo-img">
             <div class="mp-security-text">Pagamento 100% seguro</div>
         </div>
     </div>
