@@ -67,6 +67,24 @@
             margin-right: 6px;
         }
 
+        .mp-logo-container {
+            margin-top: 16px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        .mp-logo {
+            height: 32px;
+            margin-bottom: 4px;
+            opacity: 0.7;
+        }
+
+        .mp-security-text {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
         .payment-container {
             padding: 0;
             background: white;
@@ -459,6 +477,11 @@
                 <span class="icon">💡</span>
                 Complete o pagamento para acessar seu resultado personalizado
             </div>
+            <!-- Logo Mercado Pago -->
+            <div class="mp-logo-container">
+                <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.22.11/mercadolibre/logo__large_plus.png" alt="Mercado Pago" class="mp-logo">
+                <div class="mp-security-text">Pagamento 100% seguro</div>
+            </div>
         </div>
 
         <div class="payment-container">
@@ -535,19 +558,29 @@
 
     <script>
         // ============================================
-        // 🔧 CONFIGURAÇÃO PARA PRODUÇÃO - CAMPOS CORRIGIDOS
+        // 🔧 CONFIGURAÇÃO PARA PRODUÇÃO - UID CORRIGIDO
         // ============================================
         
         const BACKEND_URL = 'https://quizback-production-b442.up.railway.app';
         const PUBLIC_KEY = 'APP_USR-6bf229eb-ff25-4484-957a-6bd50fb737a0';
         
-        // Obter UID da URL ou gerar um para teste
+        // CORRIGIDO: Sempre preservar UID do Tally
         const urlParams = new URLSearchParams(window.location.search);
-        const userUID = urlParams.get('uid') || `prod-${Date.now()}`;
+        const tallyUID = urlParams.get('uid');
+        const userUID = tallyUID || `prod-${Date.now()}`;
         
-        console.log('🆔 UID do usuário:', userUID);
+        console.log('🔗 URL atual:', window.location.href);
+        console.log('🎯 UID do Tally:', tallyUID);
+        console.log('🆔 UID final utilizado:', userUID);
         console.log('🔑 Public Key (PRODUÇÃO):', PUBLIC_KEY);
         console.log('🌐 Backend URL:', BACKEND_URL);
+        
+        // ALERTA se UID do Tally não foi encontrada
+        if (!tallyUID) {
+            console.warn('⚠️ ATENÇÃO: Nenhuma UID do Tally encontrada na URL!');
+        } else {
+            console.log('✅ UID do Tally preservada:', tallyUID);
+        }
 
         // INICIALIZAR MERCADO PAGO
         const mp = new MercadoPago(PUBLIC_KEY, { 
@@ -850,7 +883,13 @@
                 clearInterval(window.countdownInterval);
             }
             stopPolling();
-            window.location.href = `https://www.suellenseragi.com.br/resultado?uid=${userUID}`;
+            
+            // CORRIGIDO: Usar sempre a UID original do Tally
+            const finalUID = tallyUID || userUID;
+            console.log('🎯 Redirecionando com UID:', finalUID);
+            console.log('🔗 URL de destino:', `https://www.suellenseragi.com.br/resultado?uid=${finalUID}`);
+            
+            window.location.href = `https://www.suellenseragi.com.br/resultado?uid=${finalUID}`;
         }
 
         // Função para voltar
@@ -899,7 +938,7 @@
 
         const renderPaymentBrick = async (bricksBuilder) => {
             try {
-                console.log('🚀 Criando Payment Brick com validação PIX...');
+                console.log('🚀 Criando Payment Brick com UID preservada...');
                 
                 const userData = getEnhancedUserData();
                 
@@ -926,7 +965,7 @@
                     },
                     callbacks: {
                         onReady: () => {
-                            console.log('✅ Payment Brick carregado com validação PIX');
+                            console.log('✅ Payment Brick carregado com UID preservada');
                             updateStatusIndicator('success', 'Carregado');
                             
                             const loadingElement = document.querySelector('.loading-state');
@@ -935,8 +974,9 @@
                             }
                         },
                         onSubmit: ({ selectedPaymentMethod, formData }) => {
-                            console.log('💳 Processando pagamento com validação PIX');
+                            console.log('💳 Processando pagamento com UID do Tally');
                             console.log('📊 Dados do pagamento:', formData);
+                            console.log('🎯 UID que será usada:', tallyUID || userUID);
                             
                             showStatusScreen('processing');
                             updateStatusIndicator('checking', 'Processando...');
@@ -944,7 +984,7 @@
                             return new Promise((resolve, reject) => {
                                 const enhancedPaymentData = {
                                     ...formData,
-                                    uid: userUID,
+                                    uid: tallyUID || userUID, // CORRIGIDO: Usar UID original do Tally
                                     description: 'Teste de Prosperidade - Resultado Personalizado',
                                     transaction_amount: 10,
                                     additional_info: {
@@ -976,13 +1016,13 @@
                                     }
                                 };
 
-                                console.log('📤 Enviando dados com validação PIX:', enhancedPaymentData);
+                                console.log('📤 Enviando dados com UID preservada:', enhancedPaymentData);
 
                                 fetch(`${BACKEND_URL}/api/process_payment`, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        'X-Idempotency-Key': `${userUID}-${Date.now()}`
+                                        'X-Idempotency-Key': `${tallyUID || userUID}-${Date.now()}` // CORRIGIDO: Usar UID original
                                     },
                                     body: JSON.stringify(enhancedPaymentData),
                                 })
@@ -996,7 +1036,7 @@
                                     return response.json();
                                 })
                                 .then(result => {
-                                    console.log('✅ Resposta do backend com validação PIX:', result);
+                                    console.log('✅ Resposta do backend com UID preservada:', result);
                                     
                                     if (result.status === 'approved') {
                                         console.log('🎉 Pagamento APROVADO!');
@@ -1005,7 +1045,7 @@
                                         showStatusScreen('success', result);
                                         resolve();
                                     } else if (result.status === 'pending' && result.payment_method_id === 'pix') {
-                                        console.log('💰 PIX criado com validação');
+                                        console.log('💰 PIX criado com UID preservada');
                                         updateStatusIndicator('checking', 'PIX criado');
                                         showStatusScreen('pix', result);
                                         resolve();
@@ -1042,7 +1082,7 @@
                     settings
                 );
                 
-                console.log('✅ Payment Brick criado com validação PIX');
+                console.log('✅ Payment Brick criado com UID preservada');
                 
                 setTimeout(() => {
                     const loadingElement = document.querySelector('.loading-state');
@@ -1072,14 +1112,16 @@
         // ============================================
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Inicializando checkout com validação PIX');
-            console.log('🆔 UID:', userUID);
+            console.log('🚀 Inicializando checkout com preservação de UID do Tally');
+            console.log('🔗 URL completa:', window.location.href);
+            console.log('🎯 UID do Tally detectada:', tallyUID);
+            console.log('🆔 UID final utilizada:', userUID);
             console.log('🌐 Backend:', BACKEND_URL);
-            console.log('🔐 Ambiente: PRODUÇÃO com validação PIX');
+            console.log('🔐 Ambiente: PRODUÇÃO com UID preservada');
             
             testBackendConnection().then(isOnline => {
                 if (isOnline) {
-                    console.log('✅ Backend online - iniciando Payment Brick com validação');
+                    console.log('✅ Backend online - iniciando Payment Brick');
                     updateStatusIndicator('success', 'Conectado');
                     renderPaymentBrick(bricksBuilder);
                 } else {
