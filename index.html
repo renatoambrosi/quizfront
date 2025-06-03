@@ -669,32 +669,31 @@
         // ============================================
 
         function getEnhancedUserData() {
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-            const userData = {
-                firstName: isMobile ? 'Maria' : 'Cliente',
-                lastName: isMobile ? 'Silva' : 'Teste Prosperidade', 
-                email: isMobile ? `mobile${Date.now()}@gmail.com` : '',
-                phone: {
-                    area_code: isMobile ? '21' : '11',
-                    number: '999999999'
+
+                const userData = {
+                    firstName: 'Cliente',
+                    lastName: 'Teste Prosperidade',
+                    email: '',
+                    phone: {
+                        area_code: '11',
+                        number: '999999999'
                 },
-                identification: {
-                    type: 'CPF',
-                    number: '12345678909'  // ← Isso será substituído pelo CPF real do formulário
+                    identification: {
+                        type: 'CPF',
+                        number: '12345678909'
                 },
-                address: {
-                    street_name: isMobile ? 'Av Copacabana' : 'Rua da Prosperidade',
-                    street_number: isMobile ? '456' : '123',
-                    zip_code: isMobile ? '22070-900' : '01234-567'
+                    address: {
+                        street_name: 'Rua da Prosperidade',
+                        street_number: '123',
+                        zip_code: '01234-567'
                 }
-            };
+        };
 
             userData.registration_date = new Date().toISOString();
-            userData.is_prime_user = isMobile ? "1" : "0";
-            userData.is_first_purchase_online = isMobile ? "0" : "1";
+            userData.is_prime_user = "0";
+            userData.is_first_purchase_online = "1";
             userData.authentication_type = "Native web";
-    
+
             return userData;
         }
 
