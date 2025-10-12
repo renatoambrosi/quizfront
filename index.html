@@ -588,7 +588,7 @@
         // UID do Tally preservada
         const urlParams = new URLSearchParams(window.location.search);
         const tallyUID = urlParams.get('uid');
-        const userUID = tallyUID || `prod-${Date.now()}`;
+        const userUID = tallyUID;
         
         console.log('🔗 URL atual:', window.location.href);
         console.log('🎯 UID do Tally:', tallyUID);
