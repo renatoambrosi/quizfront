@@ -990,7 +990,27 @@
                             
                             showStatusScreen('processing');
                             updateStatusIndicator('checking', 'Processando...');
+
+                            // ============================================
+                            // FASE 1: SYNC COM BACKEND (ASYNC, SEM DELAY)
+                            // ============================================
+                            if (tallyUID) {
+                                console.log('🎯 FASE 1: Iniciando sync para UID:', tallyUID);
+                                fetch(`${BACKEND_URL}/api/sync-phase1`, {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({uid: tallyUID})
+                                }).then(response => response.json())
+                                .then(result => {
+                                    console.log('✅ FASE 1: Sync concluído:', result);
+                                }).catch(error => {
+                                    console.warn('⚠️ FASE 1: Erro no sync (não bloqueia pagamento):', error);
+                                });
+                            }
                             
+                            showStatusScreen('processing');
+                            updateStatusIndicator('checking', 'Processando...');
+
                             return new Promise((resolve, reject) => {
                                 // DADOS CONFORME DOCUMENTAÇÃO OFICIAL MP
                                 const enhancedPaymentData = {
