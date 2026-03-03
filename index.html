@@ -492,7 +492,7 @@
             <div class="amount-display">R$ 19,00</div>
             <div class="completion-message">
                 <span class="icon">💡</span>
-                Complete o pagamento para acessar seu resultado personalizado
+                Complete o pagamento para acessar seu  personalizado
             </div>
         </div>
 
@@ -564,12 +564,12 @@
                 </div>
 
                 <div id="countdownSection" class="countdown-section">
-                    <div class="countdown-text">Redirecionando para seu resultado em:</div>
+                    <div class="countdown-text">Redirecionando para seu  em:</div>
                     <div id="countdownTimer" class="countdown-timer">10</div>
                 </div>
 
                 <button id="resultButton" class="action-button">
-                    Ver Resultado do Teste Agora
+                    Ver  do Teste Agora
                 </button>
                 
                 <a href="https://quizfront.vercel.app" class="back-link">Voltar à página inicial</a>
@@ -746,8 +746,8 @@
                     statusHeader.className = 'status-header success';
                     statusIcon.textContent = '✓';
                     statusTitle.textContent = 'Seu pagamento foi aprovado';
-                    statusSubtitle.textContent = 'Parabéns! Agora você pode acessar seu resultado personalizado do Teste de Prosperidade.';
-                    resultButton.textContent = 'Ver Resultado do Teste Agora';
+                    statusSubtitle.textContent = 'Parabéns! Agora você pode acessar seu  personalizado do Teste de Prosperidade.';
+                    resultButton.textContent = 'Ver  do Teste Agora';
                     countdownSection.style.display = 'block';
                     pixSection.style.display = 'none';
                     pixWarning.style.display = 'none';
@@ -759,7 +759,7 @@
                     statusIcon.textContent = '⏳';
                     statusTitle.textContent = 'Pague com PIX';
                     statusSubtitle.textContent = 'Escaneie o QR Code ou copie o código PIX para concluir seu pagamento.';
-                    resultButton.textContent = 'Já paguei - Ver meu resultado';
+                    resultButton.textContent = 'Já paguei - Ver meu ';
                     countdownSection.style.display = 'none';
                     pixWarning.style.display = 'none';
                     
@@ -884,11 +884,11 @@
             
             setTimeout(() => {
                 warningBox.style.display = 'none';
-                resultButton.textContent = 'Já paguei - Ver meu resultado';
+                resultButton.textContent = 'Já paguei - Ver meu ';
             }, 5000);
         }
 
-        // Função para redirecionar ao resultado
+        // Função para redirecionar ao 
         function redirectToResult() {
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
@@ -897,9 +897,9 @@
             
             const finalUID = tallyUID || userUID;
             console.log('🎯 Redirecionando com UID:', finalUID);
-            console.log('🔗 URL de destino:', `https://www.suellenseragi.com.br/resultado1?uid=${finalUID}`);
+            console.log('🔗 URL de destino:', `https://www.suellenseragi.com.br/resultado4?uid=${finalUID}`);
             
-            window.location.href = `https://www.suellenseragi.com.br/resultado1?uid=${finalUID}`;
+            window.location.href = `https://www.suellenseragi.com.br/resultado4?uid=${finalUID}`;
         }
 
         // Função para voltar
