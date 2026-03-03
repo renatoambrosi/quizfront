@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -492,7 +493,7 @@
             <div class="amount-display">R$ 19,00</div>
             <div class="completion-message">
                 <span class="icon">💡</span>
-                Complete o pagamento para acessar seu  personalizado
+                Complete o pagamento para acessar seu resultado personalizado
             </div>
         </div>
 
@@ -564,12 +565,12 @@
                 </div>
 
                 <div id="countdownSection" class="countdown-section">
-                    <div class="countdown-text">Redirecionando para seu  em:</div>
+                    <div class="countdown-text">Redirecionando para seu resultado em:</div>
                     <div id="countdownTimer" class="countdown-timer">10</div>
                 </div>
 
                 <button id="resultButton" class="action-button">
-                    Ver  do Teste Agora
+                    Ver Resultado do Teste Agora
                 </button>
                 
                 <a href="https://quizfront.vercel.app" class="back-link">Voltar à página inicial</a>
@@ -747,7 +748,7 @@
                     statusIcon.textContent = '✓';
                     statusTitle.textContent = 'Seu pagamento foi aprovado';
                     statusSubtitle.textContent = 'Parabéns! Agora você pode acessar seu resultado personalizado do Teste de Prosperidade.';
-                    resultButton.textContent = 'Ver resultado do Teste Agora';
+                    resultButton.textContent = 'Ver Resultado do Teste Agora';
                     countdownSection.style.display = 'block';
                     pixSection.style.display = 'none';
                     pixWarning.style.display = 'none';
@@ -798,7 +799,7 @@
                     statusHeader.className = 'status-header error';
                     statusIcon.textContent = '❌';
                     statusTitle.textContent = 'Erro no pagamento';
-                    statusSubtitle.textContent = 'Não foi possível processar seu pagamento. Entre em contato por whatsapp em 62 99988-4411.';
+                    statusSubtitle.textContent = 'Não foi possível processar seu pagamento. Tente novamente com outro método de pagamento.';
                     countdownSection.style.display = 'none';
                     pixSection.style.display = 'none';
                     pixWarning.style.display = 'none';
@@ -888,7 +889,7 @@
             }, 5000);
         }
 
-        // Função para redirecionar ao 
+        // Função para redirecionar ao resultado
         function redirectToResult() {
             if (window.countdownInterval) {
                 clearInterval(window.countdownInterval);
