@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -509,7 +508,7 @@
 
         <!-- Logo Mercado Pago -->
         <div class="mp-logo-footer">
-            <img src="https://quizfront.vercel.app/mercado_pago-logo.png" 
+            <img src="/mercado_pago-logo.png" 
                  alt="Mercado Pago" 
                  class="mp-logo-img">
             <div class="mp-security-text">Pagamento 100% seguro</div>
@@ -573,7 +572,7 @@
                     Ver Resultado do Teste Agora
                 </button>
                 
-                <a href="https://quizfront.vercel.app" class="back-link">Voltar à página inicial</a>
+                <a href="https://www.suellenseragi.com.br" class="back-link">Voltar à página inicial</a>
             </div>
         </div>
     </div>
@@ -992,26 +991,6 @@
                             showStatusScreen('processing');
                             updateStatusIndicator('checking', 'Processando...');
 
-                            // ============================================
-                            // FASE 1: SYNC COM BACKEND (ASYNC, SEM DELAY)
-                            // ============================================
-                            if (tallyUID) {
-                                console.log('🎯 FASE 1: Iniciando sync para UID:', tallyUID);
-                                fetch(`${BACKEND_URL}/api/sync-phase1`, {
-                                    method: 'POST',
-                                    headers: {'Content-Type': 'application/json'},
-                                    body: JSON.stringify({uid: tallyUID})
-                                }).then(response => response.json())
-                                .then(result => {
-                                    console.log('✅ FASE 1: Sync concluído:', result);
-                                }).catch(error => {
-                                    console.warn('⚠️ FASE 1: Erro no sync (não bloqueia pagamento):', error);
-                                });
-                            }
-                            
-                            showStatusScreen('processing');
-                            updateStatusIndicator('checking', 'Processando...');
-
                             return new Promise((resolve, reject) => {
                                 // DADOS CONFORME DOCUMENTAÇÃO OFICIAL MP
                                 const enhancedPaymentData = {
@@ -1155,7 +1134,7 @@
             // ✅ PRESERVAR UID NO LINK DE VOLTA
             const backLink = document.querySelector('.back-link');
             if (backLink && userUID) {
-                backLink.href = `https://quizfront.vercel.app/?uid=${userUID}`;
+                backLink.href = `https://www.suellenseragi.com.br?uid=${userUID}`;
                 console.log('🔗 Link de volta atualizado com UID:', backLink.href);
             }
             
