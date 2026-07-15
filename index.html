@@ -8,9 +8,28 @@
     <meta http-equiv="Permissions-Policy" content="fullscreen=(), camera=(), microphone=(), geolocation=()">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>Checkout - Teste de Prosperidade</title>
+    <script>
+      /* Origem pelo prefixo "VM" no uid — leitura SÍNCRONA da URL (sem rede),
+         roda antes do SDK e antes de pintar a marca. Não atrasa o carregamento. */
+      (function () {
+        try {
+          var uid = new URLSearchParams(location.search).get('uid') || '';
+          if (/^VM/i.test(uid)) {
+            document.documentElement.classList.add('origem-vm');
+            document.title = 'Checkout - Teste do Subconsciente';
+          }
+        } catch (e) {}
+      })();
+    </script>
     <!-- SDK OFICIAL MERCADO PAGO CONFORME DOCUMENTAÇÃO -->
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <style>
+        /* Marca por origem: padrão = Teste de Prosperidade (Tally);
+           html.origem-vm = Teste do Subconsciente (Vida Mágica). Sem flash. */
+        .marca-sub { display: none; }
+        html.origem-vm .marca-prosp { display: none; }
+        html.origem-vm .marca-sub { display: inline; }
+
         * {
             margin: 0;
             padding: 0;
@@ -488,7 +507,7 @@
     <!-- Checkout Section -->
     <div id="checkoutSection" class="checkout-container">
         <div class="checkout-header">
-            <h2>Teste de Prosperidade</h2>
+            <h2><span class="marca-prosp">Teste de Prosperidade</span><span class="marca-sub">Teste do Subconsciente</span></h2>
             <div class="amount-display">R$ 19,00</div>
             <div class="completion-message">
                 <span class="icon">💡</span>
@@ -530,7 +549,7 @@
                         <div class="detail-icon">💰</div>
                         <div class="detail-content">
                             <div class="detail-title">R$ 19,00</div>
-                            <div class="detail-subtitle">Teste de Prosperidade</div>
+                            <div class="detail-subtitle"><span class="marca-prosp">Teste de Prosperidade</span><span class="marca-sub">Teste do Subconsciente</span></div>
                         </div>
                     </div>
                     
@@ -746,7 +765,9 @@
                     statusHeader.className = 'status-header success';
                     statusIcon.textContent = '✓';
                     statusTitle.textContent = 'Seu pagamento foi aprovado';
-                    statusSubtitle.textContent = 'Parabéns! Agora você pode acessar seu resultado personalizado do Teste de Prosperidade.';
+                    statusSubtitle.textContent = /^VM/i.test((tallyUID || userUID) || '')
+                        ? 'Parabéns! Agora você pode acessar seu resultado personalizado do Teste do Subconsciente.'
+                        : 'Parabéns! Agora você pode acessar seu resultado personalizado do Teste de Prosperidade.';
                     resultButton.textContent = 'Ver Resultado do Teste Agora';
                     countdownSection.style.display = 'block';
                     pixSection.style.display = 'none';
@@ -896,10 +917,14 @@
             stopPolling();
             
             const finalUID = tallyUID || userUID;
-            console.log('🎯 Redirecionando com UID:', finalUID);
-            console.log('🔗 URL de destino:', `https://www.suellenseragi.com.br/resultado4?uid=${finalUID}`);
-            
-            window.location.href = `https://www.suellenseragi.com.br/resultado4?uid=${finalUID}`;
+            // VM (Teste do Subconsciente) → resultado no Vida Mágica (sem o "VM").
+            // Sem VM (Tally) → resultado4, INALTERADO.
+            const destino = /^VM/i.test(finalUID || '')
+                ? `https://www.vidamagica.com.br/resultado/${finalUID.replace(/^VM/i, '')}`
+                : `https://www.suellenseragi.com.br/resultado4?uid=${finalUID}`;
+            console.log('🎯 Redirecionando com UID:', finalUID, '→', destino);
+
+            window.location.href = destino;
         }
 
         // Função para voltar
